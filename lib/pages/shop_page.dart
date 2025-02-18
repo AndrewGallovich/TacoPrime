@@ -18,7 +18,7 @@ class _ShopPageState extends State<ShopPage> {
 
         Expanded(
           child: ListView.builder(
-          itemCount: 10,
+          itemCount: 3,
           itemBuilder: (context, index) {
             // Create a Restaurant object
             Restaurant restaurant = Restaurant(
@@ -28,9 +28,10 @@ class _ShopPageState extends State<ShopPage> {
             );
             return RestaurantTile(
               restaurant: restaurant,
-            );
-          },
-        )),
+              );
+            },
+          )
+        ),
       ],
     );
   }

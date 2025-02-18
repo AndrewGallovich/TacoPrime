@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tacoprime/components/restaurant_tile.dart';
+import 'package:tacoprime/models/restaurant.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -10,8 +12,26 @@ class ShopPage extends StatefulWidget {
 class _ShopPageState extends State<ShopPage> {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: const Text('Shop Page'),
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+
+        Expanded(
+          child: ListView.builder(
+          itemCount: 10,
+          itemBuilder: (context, index) {
+            // Create a Restaurant object
+            Restaurant restaurant = Restaurant(
+              name: 'Restaurant Name',
+              imagePath: 'lib/images/restaurant.jpg',
+              description: 'Restaurant Description',
+            );
+            return RestaurantTile(
+              restaurant: restaurant,
+            );
+          },
+        )),
+      ],
     );
   }
 }

@@ -40,7 +40,11 @@ void removeFromCart() {
       ),
       margin: EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: Image.asset(widget.restaurant.imagePath),
+        leading: 
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.asset(widget.restaurant.imagePath)
+          ),
         title: Text(widget.restaurant.name),
         trailing: IconButton(
           icon: Icon(Icons.delete),

@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
     measurementId: 'G-JVPFNXF9BT',
   );
+
 }

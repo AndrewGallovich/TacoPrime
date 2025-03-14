@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tacoprime/pages/login_page.dart';
+import 'package:tacoprime/pages/login_check.dart';
 import 'package:tacoprime/pages/restaurant_home_page.dart';
 
 class IntroPage extends StatelessWidget {
@@ -52,7 +52,7 @@ class IntroPage extends StatelessWidget {
               GestureDetector(
                 onTap: () => Navigator.push(
                   context, MaterialPageRoute(
-                    builder: (context) => LoginPage(),
+                    builder: (context) => LoginCheck(),
                   ),
                 ),
                 child: Container(

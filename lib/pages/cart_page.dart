@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tacoprime/models/restaurant.dart';
@@ -38,7 +39,18 @@ class _CartPageState extends State<CartPage> {
 
           }),
           ),
-          
+
+          SizedBox(height: 20),
+
+          Center(
+            child: MaterialButton(
+              onPressed: () {
+              FirebaseAuth.instance.signOut(); 
+            },
+            color: Colors.black,
+            child: Text('Sign Out', style: TextStyle(color: Colors.white)),
+            ),
+          )
         ],
       ),
     )

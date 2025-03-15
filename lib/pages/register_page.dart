@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -14,18 +15,33 @@ class _RegisterPageState extends State<RegisterPage> {
 
 final _emailController = TextEditingController();
 final _passwordController = TextEditingController();
+final _confirmPasswordController = TextEditingController();
 
 @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
 Future signUp() async {
- 
+  if (passwordConfirmed()) {
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: _emailController.text.trim(), 
+      password: _passwordController.text.trim()
+    );
+  }
 }
 
+bool passwordConfirmed() {
+  if (_passwordController.text.trim() == _confirmPasswordController.text.trim()) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +130,34 @@ Future signUp() async {
                       obscureText: true,
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        border: InputBorder.none,
+                        ),
+                      ),
+                  ),
+                ),
+              ),
+            
+              SizedBox(height: 10),
+
+              // Confirm password text field
+            
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    border: Border.all(
+                      color: Colors.white,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 20),
+                    child: TextField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Confirm Password',
                         border: InputBorder.none,
                         ),
                       ),

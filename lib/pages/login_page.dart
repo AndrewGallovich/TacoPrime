@@ -1,5 +1,6 @@
 import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/material.dart";
+import "package:tacoprime/pages/forgot_password_page.dart";
 
 class LoginPage extends StatefulWidget {
   final VoidCallback showRegisterPage;
@@ -121,6 +122,35 @@ Future signIn() async {
                         ),
                       ),
                   ),
+                ),
+              ),
+
+              SizedBox(height: 10),
+
+              // Forgot password
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder:(context) {
+                              return ForgotPasswordPage();
+                            },
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             

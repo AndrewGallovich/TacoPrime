@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tacoprime/pages/login_check.dart';
+import 'package:tacoprime/authorization/login_check.dart';
 
 import 'models/cart.dart';
 

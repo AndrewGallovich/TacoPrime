@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:tacoprime/pages/auth_page.dart';
-import 'home_page.dart';
+import 'package:tacoprime/authorization/auth_page.dart';
+import '../pages/home_page.dart';
 
 class LoginCheck extends StatelessWidget {
   const LoginCheck({Key? key}) : super(key: key);

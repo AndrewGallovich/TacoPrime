@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tacoprime/pages/login_check.dart';
+import 'package:tacoprime/authorization/login_check.dart';
 import 'package:tacoprime/pages/restaurant_home_page.dart';
 
 class IntroPage extends StatelessWidget {

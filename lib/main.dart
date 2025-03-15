@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tacoprime/pages/intro_page.dart';
+import 'package:tacoprime/pages/login_check.dart';
 
 import 'models/cart.dart';
 
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       create: (context) => Cart(),
       builder: (context, child) => const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: IntroPage(),
+      home: LoginCheck(),
     ),
     );
   }

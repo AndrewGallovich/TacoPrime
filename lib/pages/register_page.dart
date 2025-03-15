@@ -1,27 +1,19 @@
-import "package:firebase_auth/firebase_auth.dart";
-import "package:flutter/material.dart";
+import 'package:flutter/material.dart';
 
-class LoginPage extends StatefulWidget {
-  final VoidCallback showRegisterPage;
-  const LoginPage({super.key, required this.showRegisterPage});
+class RegisterPage extends StatefulWidget {
+  final VoidCallback showLoginPage;
+  const RegisterPage({super.key, required this.showLoginPage});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
 
 // Text Controllers
 
 final _emailController = TextEditingController();
 final _passwordController = TextEditingController();
-
-Future signIn() async {
-  await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: _emailController.text.trim(), 
-    password: _passwordController.text.trim()
-    );
-}
 
 @override
   void dispose() {
@@ -29,6 +21,11 @@ Future signIn() async {
     _passwordController.dispose();
     super.dispose();
   }
+
+Future signUp() async {
+ 
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +47,7 @@ Future signIn() async {
               // Hello Again
             
               Text(
-                'Hello Again!',
+                'Welcome',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
@@ -61,7 +58,7 @@ Future signIn() async {
               SizedBox(height: 5),
             
               Text(
-                'You\'ve been missed!',
+                'Please register with your details below',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.black,
@@ -131,7 +128,7 @@ Future signIn() async {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: GestureDetector(
-                  onTap: signIn,
+                  onTap: signUp,
                   child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -140,7 +137,7 @@ Future signIn() async {
                   ),
                   child: Center(
                     child: Text(
-                    'Sign In',
+                    'Sign Up',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -160,15 +157,15 @@ Future signIn() async {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                 Text(
-                  'Not a member?',
+                  'Already a member?',
                   style: TextStyle(
                   fontWeight: FontWeight.bold,
                   ),
                 ),
                 GestureDetector(
-                  onTap: widget.showRegisterPage,
+                  onTap: widget.showLoginPage,
                   child: Text(
-                    ' Register now',
+                    ' Log in',
                     style: TextStyle(
                     color: Colors.blue,
                     fontWeight: FontWeight.bold,

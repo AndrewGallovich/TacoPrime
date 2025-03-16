@@ -64,6 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
+    iosClientId: '1019698818755-5kct07jjpl2v498d6fd14m4kdgop0qn1.apps.googleusercontent.com',
     iosBundleId: 'com.example.tacoprime',
   );
 
@@ -73,6 +74,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
+    iosClientId: '1019698818755-5kct07jjpl2v498d6fd14m4kdgop0qn1.apps.googleusercontent.com',
     iosBundleId: 'com.example.tacoprime',
   );
 

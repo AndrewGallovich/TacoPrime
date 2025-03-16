@@ -12,7 +12,12 @@
           "package_name": "com.example.tacoprime"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1019698818755-79j9fj1dk2ks60p1usjm74jigu6quefo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB7A6RfFvHBDEIqeDpYHm5aMnLAIImldDQ"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019698818755-79j9fj1dk2ks60p1usjm74jigu6quefo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019698818755-5kct07jjpl2v498d6fd14m4kdgop0qn1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.tacoprime"
+              }
+            }
+          ]
         }
       }
     }

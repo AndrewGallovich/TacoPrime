@@ -31,30 +31,46 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future signUp() async {
-    // Authenticate user
-    if (passwordConfirmed()) {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim());
+  if (passwordConfirmed()) {
+    UserCredential userCredential =
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
 
-      // Add user details to database
-      addUserDetails(
+    // The newly created user
+    User? user = userCredential.user;
+
+    // Add user details to the database using the user’s UID as the document ID
+    if (user != null) {
+      await addUserDetails(
+        user.uid,
         _firstNameController.text.trim(),
         _lastNameController.text.trim(),
-        _emailController.text.trim(),
+        user.email ?? '', // or _emailController.text.trim()
         _selectedAccountType,
       );
     }
   }
+}
 
-  Future addUserDetails(String firstName, String lastName, String email, String accountType) async {
-    await FirebaseFirestore.instance.collection('users').add({
-      'firstName': firstName,
-      'lastName': lastName,
-      'email': email,
-      'accountType': accountType,
-    });
-  }
+Future addUserDetails(
+  String uid,
+  String firstName,
+  String lastName,
+  String email,
+  String accountType,
+) async {
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid) // Use the UID for the document ID
+      .set({
+    'firstName': firstName,
+    'lastName': lastName,
+    'email': email,
+    'accountType': accountType,
+  });
+}
 
   bool passwordConfirmed() {
     if (_passwordController.text.trim() ==

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class RestaurantSettingsPage extends StatefulWidget {
@@ -11,7 +12,13 @@ class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: const Text('Restaurant Settings Page'),
+      child: MaterialButton(
+              onPressed: () {
+              FirebaseAuth.instance.signOut(); 
+            },
+            color: Colors.black,
+            child: Text('Sign Out', style: TextStyle(color: Colors.white)),
+            ),
     );
   }
 }

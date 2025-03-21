@@ -10,22 +10,82 @@ class RestaurantSettingsPage extends StatefulWidget {
 }
 
 class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
-  // Text controllers for the form fields.
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-  // Replace this with the actual restaurant document ID.
-  final String restaurantId = "my_restaurant_id";
+  // Controllers for restaurant creation.
+  final TextEditingController _restaurantNameController = TextEditingController();
+  final TextEditingController _restaurantAddressController = TextEditingController();
 
-  Future<void> _addFoodItem() async {
-    double? price = double.tryParse(_priceController.text);
-    if (price == null) {
+  // Controllers for adding food items.
+  final TextEditingController _foodNameController = TextEditingController();
+  final TextEditingController _foodPriceController = TextEditingController();
+  final TextEditingController _foodDescriptionController = TextEditingController();
+  final TextEditingController _foodImageUrlController = TextEditingController();
+
+  // The restaurant document's ID (if it exists).
+  String? restaurantId;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRestaurant();
+  }
+
+  // Query Firestore to check if a restaurant exists for the current user.
+  Future<void> _loadRestaurant() async {
+    final querySnapshot = await _firestore
+        .collection('restaurants')
+        .where('ownerId', isEqualTo: currentUserId)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      setState(() {
+        restaurantId = querySnapshot.docs.first.id;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        restaurantId = null;
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Create a new restaurant document with an auto-generated ID.
+  Future<void> _createRestaurant() async {
+    if (_restaurantNameController.text.isEmpty || _restaurantAddressController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid price")),
+        const SnackBar(content: Text("Please fill in restaurant name and address")),
+      );
+      return;
+    }
+
+    DocumentReference docRef = await _firestore.collection('restaurants').add({
+      'name': _restaurantNameController.text,
+      'address': _restaurantAddressController.text,
+      'ownerId': currentUserId,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    setState(() {
+      restaurantId = docRef.id;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Restaurant created")),
+    );
+  }
+
+  // Add a food item to the restaurant's subcollection.
+  Future<void> _addFoodItem() async {
+    if (restaurantId == null) return;
+
+    double? price = double.tryParse(_foodPriceController.text);
+    if (_foodNameController.text.isEmpty || price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a valid food name and price")),
       );
       return;
     }
@@ -35,18 +95,18 @@ class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
         .doc(restaurantId)
         .collection('foodItems')
         .add({
-      'name': _nameController.text,
+      'name': _foodNameController.text,
       'price': price,
-      'description': _descriptionController.text,
-      'imageUrl': _imageUrlController.text,
+      'description': _foodDescriptionController.text,
+      'imageUrl': _foodImageUrlController.text,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Clear the input fields after adding.
-    _nameController.clear();
-    _priceController.clear();
-    _descriptionController.clear();
-    _imageUrlController.clear();
+    // Clear the input fields.
+    _foodNameController.clear();
+    _foodPriceController.clear();
+    _foodDescriptionController.clear();
+    _foodImageUrlController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Food item added")),
@@ -55,6 +115,10 @@ class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -69,29 +133,56 @@ class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
               child: const Text('Sign Out', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(height: 20),
-            // Form for adding food items.
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Food Name'),
-            ),
-            TextField(
-              controller: _priceController,
-              decoration: const InputDecoration(labelText: 'Price'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            TextField(
-              controller: _imageUrlController,
-              decoration: const InputDecoration(labelText: 'Image URL'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _addFoodItem,
-              child: const Text("Add Food Item"),
-            ),
+            // If restaurant doesn't exist, show form to create it.
+            if (restaurantId == null) ...[
+              const Text(
+                'Create Your Restaurant',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _restaurantNameController,
+                decoration: const InputDecoration(labelText: 'Restaurant Name'),
+              ),
+              TextField(
+                controller: _restaurantAddressController,
+                decoration: const InputDecoration(labelText: 'Restaurant Address'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _createRestaurant,
+                child: const Text("Create Restaurant"),
+              ),
+            ] else ...[
+              // Once the restaurant exists, show form to add food items.
+              const Text(
+                'Add Food Items',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _foodNameController,
+                decoration: const InputDecoration(labelText: 'Food Name'),
+              ),
+              TextField(
+                controller: _foodPriceController,
+                decoration: const InputDecoration(labelText: 'Price'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _foodDescriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+              TextField(
+                controller: _foodImageUrlController,
+                decoration: const InputDecoration(labelText: 'Image URL'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _addFoodItem,
+                child: const Text("Add Food Item"),
+              ),
+            ],
           ],
         ),
       ),

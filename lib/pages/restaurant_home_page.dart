@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/components/restaurant_nav_bar.dart';
 import 'package:tacoprime/pages/restaurant_preview_page.dart';
@@ -11,32 +13,52 @@ class RestaurantHomePage extends StatefulWidget {
 }
 
 class _RestaurantHomePageState extends State<RestaurantHomePage> {
- // Bottom Navigation Bar, this selected index will be used to navigate between the tabs
+  // Bottom Navigation Bar, this selected index will be used to navigate between the tabs
   int selectedIndex = 0;
-
-  // this method updates the selected index
-  // when user taps on the bottom navigation bar
-  void navigateBottomBar(int index) {
-    setState(() {
-      selectedIndex = index;
-    });
-  }
-
-  // pages to display
-  final List<Widget> pages = [
-    // Shop Page
-    const RestaurantPreviewPage(),
-
-    // Cart Page
-    const RestaurantSettingsPage(),
-  ];
+  String? restaurantId;
 
   @override
+  void initState() {
+    super.initState();
+    _fetchRestaurantId();
+  }
+
+  // Fetch the restaurant document ID for the logged-in user
+  Future<void> _fetchRestaurantId() async {
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('restaurants')
+        .where('ownerId', isEqualTo: currentUserId)
+        .limit(1)
+        .get();
+    if (querySnapshot.docs.isNotEmpty) {
+      setState(() {
+        restaurantId = querySnapshot.docs.first.id;
+      });
+    }
+  }
+
+  // pages to display; we use a FutureBuilder to ensure restaurantId is fetched
+  @override
   Widget build(BuildContext context) {
+    if (restaurantId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    
+    final List<Widget> pages = [
+      // Pass the fetched restaurantId into the preview page.
+      RestaurantPreviewPage(restaurantId: restaurantId!),
+      const RestaurantSettingsPage(),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.grey[300],
       bottomNavigationBar: RestaurantNavBar(
-        onTabChange: (index) => navigateBottomBar(index),
+        onTabChange: (index) => setState(() {
+          selectedIndex = index;
+        }),
       ),
       appBar: AppBar(
         backgroundColor: Colors.transparent,

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 class InsideRestaurant extends StatefulWidget {
   final String restaurantId;
 
-  const InsideRestaurant({Key? key, required this.restaurantId}) : super(key: key);
+  const InsideRestaurant({Key? key, required this.restaurantId})
+      : super(key: key);
 
   @override
   State<InsideRestaurant> createState() => _InsideRestaurantState();
@@ -24,10 +25,8 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
       }
 
       // Reference to the current user's cart subcollection
-      final cartRef = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('cart');
+      final cartRef =
+          _firestore.collection('users').doc(user.uid).collection('cart');
 
       // Add the food item to the cart
       await cartRef.add({
@@ -88,23 +87,32 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
                 final imageUrl = foodItem['imageUrl'] ?? '';
 
                 return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    leading: imageUrl.isNotEmpty
-                        ? Image.network(
-                            imageUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(Icons.fastfood),
-                    title: Text(name),
-                    subtitle: Text('\$${price.toStringAsFixed(2)}\n$description'),
-                    trailing: ElevatedButton(
-                      onPressed: () => _addToCart(foodItem),
-                      child: const Text("Add to Cart"),
-                    ),
-                  ),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      leading: imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            )
+                          : const Icon(Icons.fastfood),
+                      title: Text(name),
+                      subtitle:
+                          Text('\$${price.toStringAsFixed(2)}\n$description'),
+                      trailing: ElevatedButton(
+                        onPressed: () => _addToCart(foodItem),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          padding: const EdgeInsets.all(10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        child: const Text("Add to Cart", style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  )
                 );
               },
             );

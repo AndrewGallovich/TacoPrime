@@ -15,7 +15,11 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Restaurant Preview")),
+      backgroundColor: Colors.grey[300],
+      appBar: AppBar(
+        backgroundColor: Colors.grey[300],
+        title: const Text("Restaurant Preview"),
+        ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
         child: StreamBuilder<QuerySnapshot>(

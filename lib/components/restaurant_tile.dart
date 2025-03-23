@@ -19,7 +19,7 @@ class RestaurantTile extends StatelessWidget {
         // Restaurant Image
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Image.asset(restaurant.imagePath)),
+          child: Image.network(restaurant.imagePath)),
 
 
         

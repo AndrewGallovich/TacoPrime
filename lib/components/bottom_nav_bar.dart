@@ -19,12 +19,12 @@ class MyBottomNavBar extends StatelessWidget {
         onTabChange: (value) => onTabChange!(value),
         tabs: [
           GButton(
-            icon: Icons.home,
-            text: 'Eat',
+            icon: Icons.fastfood,
+            text: ' Eat',
           ),
           GButton(
             icon: Icons.shopping_bag_rounded,
-            text: 'Cart',
+            text: ' Cart',
           ),
         ],
         )

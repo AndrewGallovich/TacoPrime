@@ -23,18 +23,21 @@ class _CartPageState extends State<CartPage> {
         body: Center(child: Text('Please sign in to view your cart.')),
       );
     }
-
+    
     return Scaffold(
       backgroundColor: Colors.grey[300],
+      appBar: AppBar(
+        title: const Text(
+              'My Cart',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            ),
+        backgroundColor: Colors.grey[300],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'My Cart',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-            ),
             const SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(

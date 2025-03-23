@@ -18,16 +18,18 @@ class _ShopPageState extends State<ShopPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[300],
+      appBar: AppBar(
+        title: const Text(
+              'Restaurants',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            ),
+        backgroundColor: Colors.grey[300],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Restaurants',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-            ),
-            const SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _firestore.collection('restaurants').snapshots(),
@@ -49,7 +51,7 @@ class _ShopPageState extends State<ShopPage> {
                       final restaurantData =
                           docs[index].data() as Map<String, dynamic>;
                       final restaurantId = docs[index].id;
-
+    
                       // Create a Restaurant object from Firestore data
                       final restaurant = Restaurant(
                         id: restaurantId,
@@ -59,7 +61,7 @@ class _ShopPageState extends State<ShopPage> {
                         imagePath: restaurantData['imagePath'] ??
                             'assets/images/default.png',
                       );
-
+    
                       return RestaurantTile(
                         restaurant: restaurant,
                         onTap: () {

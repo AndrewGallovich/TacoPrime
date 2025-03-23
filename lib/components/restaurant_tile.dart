@@ -56,7 +56,7 @@ class RestaurantTile extends StatelessWidget {
                 ),
 
           
-                // Plus Button
+                // Button
                 GestureDetector(
                   onTap: onTap,
                   child: Container(
@@ -67,7 +67,7 @@ class RestaurantTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Icon(
-                      Icons.add,
+                      Icons.arrow_forward,
                       color: Colors.white,
                         ),
                       ),

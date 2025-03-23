@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class InsideRestaurant extends StatefulWidget {
   final String restaurantId;
+
   const InsideRestaurant({Key? key, required this.restaurantId}) : super(key: key);
 
   @override
@@ -12,11 +14,31 @@ class InsideRestaurant extends StatefulWidget {
 class _InsideRestaurantState extends State<InsideRestaurant> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Function to add a food item to the cart.
+  /// Add a food item to the currently logged-in user's cart.
   Future<void> _addToCart(Map<String, dynamic> foodItem) async {
     try {
-      // Add the food item to the "cart" collection.
-      await _firestore.collection('cart').add(foodItem);
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        // Optionally handle the case when user is not signed in
+        return;
+      }
+
+      // Reference to the current user's cart subcollection
+      final cartRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('cart');
+
+      // Add the food item to the cart
+      await cartRef.add({
+        'name': foodItem['name'],
+        'price': foodItem['price'],
+        'description': foodItem['description'],
+        'imageUrl': foodItem['imageUrl'],
+        'timestamp': FieldValue.serverTimestamp(),
+        // Add any other fields you need (quantity, etc.)
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${foodItem['name']} added to cart!')),
       );
@@ -34,7 +56,7 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
       appBar: AppBar(
         title: const Text("Food Items"),
         backgroundColor: Colors.grey[300],
-        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
         child: StreamBuilder<QuerySnapshot>(
@@ -55,6 +77,7 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
             if (docs.isEmpty) {
               return const Center(child: Text("No food items available."));
             }
+
             return ListView.builder(
               itemCount: docs.length,
               itemBuilder: (context, index) {

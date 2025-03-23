@@ -1,55 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:tacoprime/models/restaurant.dart';
 
-import '../models/cart.dart';
+class CartItem extends StatelessWidget {
+  final String docId;
+  final String name;
+  final double price;
+  final String description;
+  final String imageUrl;
 
-class CartItem extends StatefulWidget {
-  final Restaurant restaurant;
-  CartItem({
-    super.key,
-    required this.restaurant
-    });
+  const CartItem({
+    Key? key,
+    required this.docId,
+    required this.name,
+    required this.price,
+    required this.description,
+    required this.imageUrl,
+  }) : super(key: key);
 
-  @override
-  State<CartItem> createState() => _CartItemState();
-}
+  /// Remove this specific item from the Firestore cart document.
+  Future<void> removeFromCart(BuildContext context) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
 
-class _CartItemState extends State<CartItem> {
+      // Delete the document in /users/{uid}/cart/{docId}
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cart')
+          .doc(docId)
+          .delete();
 
-// remove item from cart
-void removeFromCart() {
-  Provider.of<Cart>(context, listen: false).removeFromCart(widget.restaurant);
-
-// alert user that item was removed from cart successfully
-  showDialog(
-    context: context, 
-    builder: (context) => AlertDialog(
-      title: Text('Successfully removed'),
-    ),
-    );
-}
-
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name removed from cart')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error removing $name: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(15),
-      ),
-      margin: EdgeInsets.only(bottom: 10),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
-        leading: 
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset(widget.restaurant.imagePath)
-          ),
-        title: Text(widget.restaurant.name),
+        leading: imageUrl.isNotEmpty
+            ? Image.network(
+                imageUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              )
+            : const Icon(Icons.fastfood),
+        title: Text(name),
+        subtitle: Text('\$${price.toStringAsFixed(2)}\n$description'),
         trailing: IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () => removeFromCart(),
-          ),
+          icon: const Icon(Icons.delete),
+          onPressed: () => removeFromCart(context),
+        ),
       ),
     );
   }

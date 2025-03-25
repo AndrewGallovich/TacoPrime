@@ -17,22 +17,20 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
   Future<void> _pickAndUploadFoodImage(TextEditingController controller) async {
     final file = await ImageService.pickImage();
     if (file == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image selected')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('No image selected')));
       return;
     }
     final downloadUrl = await ImageService.uploadImage(file, 'foodImages');
     if (downloadUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error uploading image')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Error uploading image')));
       return;
     }
     controller.text = downloadUrl;
   }
 
-  // Shows the dialog for editing an existing food item, including the delete action.
+  // Shows the dialog for editing an existing food item, including a delete action.
   void _showEditDialog(DocumentSnapshot doc) {
     final foodItem = doc.data() as Map<String, dynamic>;
     final name = foodItem['name'] ?? '';
@@ -71,7 +69,8 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
                   Expanded(
                     child: TextField(
                       controller: imageUrlController,
-                      decoration: const InputDecoration(labelText: "Image URL"),
+                      decoration:
+                          const InputDecoration(labelText: "Image URL"),
                     ),
                   ),
                   IconButton(
@@ -86,32 +85,30 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
           ),
         ),
         actions: [
-          // Custom layout for action buttons.
+          // Custom layout using a full-width Row with clickable texts.
           Container(
             width: double.infinity,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Left side: Delete button with red text.
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                  ),
+                // Left side: Delete text clickable, styled red.
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                   onPressed: () async {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text("Confirm Delete"),
-                        content: const Text("Are you sure you want to delete this food item?"),
+                        content: const Text(
+                            "Are you sure you want to delete this food item?"),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
+                            onPressed: () =>
+                                Navigator.of(context).pop(false),
                             child: const Text("Cancel"),
                           ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(true),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(true),
                             child: const Text("Delete"),
                           ),
                         ],
@@ -124,41 +121,40 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
                           .collection('foodItems')
                           .doc(doc.id)
                           .delete();
-                      Navigator.of(context).pop(); // close the edit dialog
+                      Navigator.of(context).pop(); // Close the edit dialog.
                     }
                   },
                   child: const Text("Delete"),
                 ),
-                // Right side: Cancel and Save buttons grouped together.
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text("Cancel"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final newName = nameController.text;
-                        final newPrice = double.tryParse(priceController.text) ?? price;
-                        final newDescription = descriptionController.text;
-                        final newImageUrl = imageUrlController.text;
+                const Spacer(),
+                // Right side: Cancel and Save clickable texts.
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("Cancel"),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () async {
+                    final newName = nameController.text;
+                    final newPrice =
+                        double.tryParse(priceController.text) ?? price;
+                    final newDescription = descriptionController.text;
+                    final newImageUrl = imageUrlController.text;
 
-                        await _firestore
-                            .collection('restaurants')
-                            .doc(widget.restaurantId)
-                            .collection('foodItems')
-                            .doc(doc.id)
-                            .update({
-                          'name': newName,
-                          'price': newPrice,
-                          'description': newDescription,
-                          'imageUrl': newImageUrl,
-                        });
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text("Save"),
-                    ),
-                  ],
+                    await _firestore
+                        .collection('restaurants')
+                        .doc(widget.restaurantId)
+                        .collection('foodItems')
+                        .doc(doc.id)
+                        .update({
+                      'name': newName,
+                      'price': newPrice,
+                      'description': newDescription,
+                      'imageUrl': newImageUrl,
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Save"),
                 ),
               ],
             ),
@@ -201,7 +197,8 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
                   Expanded(
                     child: TextField(
                       controller: imageUrlController,
-                      decoration: const InputDecoration(labelText: "Image URL"),
+                      decoration:
+                          const InputDecoration(labelText: "Image URL"),
                     ),
                   ),
                   IconButton(
@@ -220,7 +217,7 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text("Cancel"),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
               final name = nameController.text;
               final price = double.tryParse(priceController.text) ?? 0.0;
@@ -304,7 +301,7 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
                         : const Icon(Icons.fastfood),
                     title: Text(name),
                     subtitle: Text('\$${price.toStringAsFixed(2)}\n$description'),
-                    trailing: ElevatedButton(
+                    trailing: TextButton(
                       onPressed: () => _showEditDialog(docs[index]),
                       child: const Text("Edit"),
                     ),

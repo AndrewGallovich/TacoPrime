@@ -13,8 +13,7 @@ class RestaurantPreviewPage extends StatefulWidget {
 class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // This function picks an image and uploads it to the 'foodImages' folder.
-  // On successful upload, it sets the provided controller's text to the download URL.
+  // Helper function to pick and upload an image.
   Future<void> _pickAndUploadFoodImage(TextEditingController controller) async {
     final file = await ImageService.pickImage();
     if (file == null) {
@@ -33,6 +32,221 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
     controller.text = downloadUrl;
   }
 
+  // Shows the dialog for editing an existing food item, including the delete action.
+  void _showEditDialog(DocumentSnapshot doc) {
+    final foodItem = doc.data() as Map<String, dynamic>;
+    final name = foodItem['name'] ?? '';
+    final price = foodItem['price'] ?? 0.0;
+    final description = foodItem['description'] ?? '';
+    final imageUrl = foodItem['imageUrl'] ?? '';
+
+    final nameController = TextEditingController(text: name);
+    final priceController = TextEditingController(text: price.toString());
+    final descriptionController = TextEditingController(text: description);
+    final imageUrlController = TextEditingController(text: imageUrl);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Food Item"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Name"),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: "Price"),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: imageUrlController,
+                      decoration: const InputDecoration(labelText: "Image URL"),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.upload_file),
+                    onPressed: () async {
+                      await _pickAndUploadFoodImage(imageUrlController);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          // Custom layout for action buttons.
+          Container(
+            width: double.infinity,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left side: Delete button with red text.
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Confirm Delete"),
+                        content: const Text("Are you sure you want to delete this food item?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text("Delete"),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      await _firestore
+                          .collection('restaurants')
+                          .doc(widget.restaurantId)
+                          .collection('foodItems')
+                          .doc(doc.id)
+                          .delete();
+                      Navigator.of(context).pop(); // close the edit dialog
+                    }
+                  },
+                  child: const Text("Delete"),
+                ),
+                // Right side: Cancel and Save buttons grouped together.
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final newName = nameController.text;
+                        final newPrice = double.tryParse(priceController.text) ?? price;
+                        final newDescription = descriptionController.text;
+                        final newImageUrl = imageUrlController.text;
+
+                        await _firestore
+                            .collection('restaurants')
+                            .doc(widget.restaurantId)
+                            .collection('foodItems')
+                            .doc(doc.id)
+                            .update({
+                          'name': newName,
+                          'price': newPrice,
+                          'description': newDescription,
+                          'imageUrl': newImageUrl,
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("Save"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Shows the dialog for adding a new food item.
+  void _showAddDialog() {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final imageUrlController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add Food Item"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Name"),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: "Price"),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: imageUrlController,
+                      decoration: const InputDecoration(labelText: "Image URL"),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.upload_file),
+                    onPressed: () async {
+                      await _pickAndUploadFoodImage(imageUrlController);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text;
+              final price = double.tryParse(priceController.text) ?? 0.0;
+              final description = descriptionController.text;
+              final imageUrl = imageUrlController.text;
+
+              await _firestore
+                  .collection('restaurants')
+                  .doc(widget.restaurantId)
+                  .collection('foodItems')
+                  .add({
+                'name': name,
+                'price': price,
+                'description': description,
+                'imageUrl': imageUrl,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,6 +257,10 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
           "Restaurant Preview",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddDialog,
+        child: const Icon(Icons.add),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -85,101 +303,9 @@ class _RestaurantPreviewPageState extends State<RestaurantPreviewPage> {
                           )
                         : const Icon(Icons.fastfood),
                     title: Text(name),
-                    subtitle:
-                        Text('\$${price.toStringAsFixed(2)}\n$description'),
+                    subtitle: Text('\$${price.toStringAsFixed(2)}\n$description'),
                     trailing: ElevatedButton(
-                      onPressed: () {
-                        final nameController =
-                            TextEditingController(text: name);
-                        final priceController =
-                            TextEditingController(text: price.toString());
-                        final descriptionController =
-                            TextEditingController(text: description);
-                        final imageUrlController =
-                            TextEditingController(text: imageUrl);
-
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Edit Food Item"),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller: nameController,
-                                    decoration: const InputDecoration(
-                                        labelText: "Name"),
-                                  ),
-                                  TextField(
-                                    controller: priceController,
-                                    decoration: const InputDecoration(
-                                        labelText: "Price"),
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                  TextField(
-                                    controller: descriptionController,
-                                    decoration: const InputDecoration(
-                                        labelText: "Description"),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextField(
-                                          controller: imageUrlController,
-                                          decoration: const InputDecoration(
-                                              labelText: "Image URL"),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.upload_file),
-                                        onPressed: () async {
-                                          await _pickAndUploadFoodImage(
-                                              imageUrlController);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text("Cancel"),
-                              ),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  final newName = nameController.text;
-                                  final newPrice =
-                                      double.tryParse(priceController.text) ??
-                                          price;
-                                  final newDescription =
-                                      descriptionController.text;
-                                  final newImageUrl = imageUrlController.text;
-
-                                  await _firestore
-                                      .collection('restaurants')
-                                      .doc(widget.restaurantId)
-                                      .collection('foodItems')
-                                      .doc(docs[index].id)
-                                      .update({
-                                    'name': newName,
-                                    'price': newPrice,
-                                    'description': newDescription,
-                                    'imageUrl': newImageUrl,
-                                  });
-
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text("Save"),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      onPressed: () => _showEditDialog(docs[index]),
                       child: const Text("Edit"),
                     ),
                   ),

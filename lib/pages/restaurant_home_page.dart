@@ -60,10 +60,6 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
           selectedIndex = index;
         }),
       ),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
       body: pages[selectedIndex],
     );
   }

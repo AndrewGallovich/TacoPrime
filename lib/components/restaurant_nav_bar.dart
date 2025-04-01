@@ -23,6 +23,10 @@ class RestaurantNavBar extends StatelessWidget {
             text: 'Your Restaurant',
           ),
           GButton(
+            icon: Icons.assignment,
+            text: 'Orders',
+          ),
+          GButton(
             icon: Icons.settings,
             text: 'Restaurant Settings',
           ),

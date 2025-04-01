@@ -52,7 +52,10 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text("Clear Cart"),
+                  child: const Text(
+                    "Clear Cart",
+                    style: TextStyle(color: Colors.red),
+                    ),
                 ),
               ],
             ),

@@ -15,27 +15,69 @@ class InsideRestaurant extends StatefulWidget {
 class _InsideRestaurantState extends State<InsideRestaurant> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Add a food item to the currently logged-in user's cart.
+  /// Adds a food item to the currently logged-in user's cart.
+  /// Ensures that the cart contains items only from one restaurant.
   Future<void> _addToCart(Map<String, dynamic> foodItem) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        // Optionally handle the case when user is not signed in
+        // Optionally handle the case when user is not signed in.
         return;
       }
 
-      // Reference to the current user's cart subcollection
+      // Reference to the current user's cart subcollection.
       final cartRef =
           _firestore.collection('users').doc(user.uid).collection('cart');
 
-      // Add the food item to the cart
+      // Check existing items in the cart.
+      final cartSnapshot = await cartRef.get();
+      if (cartSnapshot.docs.isNotEmpty) {
+        // Get the restaurantId from the first cart item.
+        final existingData = cartSnapshot.docs.first.data();
+        final existingRestaurantId = existingData['restaurantId'];
+
+        // If the current restaurant does not match the one in the cart,
+        // prompt the user to clear the cart.
+        if (existingRestaurantId != widget.restaurantId) {
+          final shouldClear = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Different Restaurant"),
+              content: const Text(
+                  "Your cart contains items from a different restaurant. Would you like to clear your cart and add items from this restaurant?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Clear Cart"),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldClear != true) {
+            // If the user cancels, do not add the new item.
+            return;
+          } else {
+            // Clear all existing items from the cart.
+            for (var doc in cartSnapshot.docs) {
+              await doc.reference.delete();
+            }
+          }
+        }
+      }
+
+      // Add the food item to the cart with the restaurantId.
       await cartRef.add({
         'name': foodItem['name'],
         'price': foodItem['price'],
         'description': foodItem['description'],
         'imageUrl': foodItem['imageUrl'],
+        'restaurantId': widget.restaurantId,
         'timestamp': FieldValue.serverTimestamp(),
-        // Add any other fields you need (quantity, etc.)
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,39 +122,42 @@ class _InsideRestaurantState extends State<InsideRestaurant> {
             return ListView.builder(
               itemCount: docs.length,
               itemBuilder: (context, index) {
-                final foodItem = docs[index].data() as Map<String, dynamic>;
+                final foodItem =
+                    docs[index].data() as Map<String, dynamic>;
                 final name = foodItem['name'] ?? '';
                 final price = foodItem['price'] ?? 0.0;
                 final description = foodItem['description'] ?? '';
                 final imageUrl = foodItem['imageUrl'] ?? '';
 
                 return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: imageUrl.isNotEmpty
-                          ? Image.network(
-                              imageUrl,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(Icons.fastfood),
-                      title: Text(name),
-                      subtitle:
-                          Text('\$${price.toStringAsFixed(2)}\n$description'),
-                      trailing: ElevatedButton(
-                        onPressed: () => _addToCart(foodItem),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          padding: const EdgeInsets.all(10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(Icons.fastfood),
+                    title: Text(name),
+                    subtitle:
+                        Text('\$${price.toStringAsFixed(2)}\n$description'),
+                    trailing: ElevatedButton(
+                      onPressed: () => _addToCart(foodItem),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.all(10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
                         ),
-                        child: const Text("Add to Cart", style: TextStyle(color: Colors.white),
                       ),
-                    )
-                  )
+                      child: const Text(
+                        "Add to Cart",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 );
               },
             );

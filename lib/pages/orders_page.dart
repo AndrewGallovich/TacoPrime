@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'inside_order.dart';
 
 class OrdersPage extends StatefulWidget {
   final String restaurantId;
@@ -19,7 +20,7 @@ class _OrdersPageState extends State<OrdersPage> {
       backgroundColor: Colors.grey[300],
       appBar: AppBar(
         title: const Text(
-          'Orders',
+          'Pending Orders',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         backgroundColor: Colors.grey[300],
@@ -31,6 +32,7 @@ class _OrdersPageState extends State<OrdersPage> {
               .collection('restaurants')
               .doc(widget.restaurantId)
               .collection('orders')
+              .where('status', isEqualTo: 'pending')
               .orderBy('timestamp', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
@@ -42,12 +44,13 @@ class _OrdersPageState extends State<OrdersPage> {
             }
             final docs = snapshot.data?.docs ?? [];
             if (docs.isEmpty) {
-              return const Center(child: Text('No orders found.'));
+              return const Center(child: Text('No pending orders found.'));
             }
             return ListView.builder(
               itemCount: docs.length,
               itemBuilder: (context, index) {
-                final orderData = docs[index].data() as Map<String, dynamic>;
+                final orderDoc = docs[index];
+                final orderData = orderDoc.data() as Map<String, dynamic>;
                 final total = orderData['total'] is int
                     ? (orderData['total'] as int).toDouble()
                     : orderData['total'] as double? ?? 0.0;
@@ -61,10 +64,24 @@ class _OrdersPageState extends State<OrdersPage> {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    title:
-                        Text('Order Total: \$${total.toStringAsFixed(2)}'),
+                    title: Text('Order Total: \$${total.toStringAsFixed(2)}'),
                     subtitle: Text(
                       'Items: ${items.length}\nStatus: $status\nTime: $dateString',
+                    ),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to the inside order page for this order.
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InsideOrder(
+                              restaurantId: widget.restaurantId,
+                              orderId: orderDoc.id,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('View Order'),
                     ),
                   ),
                 );

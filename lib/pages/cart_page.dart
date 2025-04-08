@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart'; // Import Realtime Database package
 import 'package:flutter/material.dart';
 import '../components/cart_item.dart';
 
@@ -12,8 +13,11 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Create a reference to the Realtime Database.
+  final DatabaseReference _realtimeDatabase = FirebaseDatabase.instance.ref();
 
   Future<void> _orderNow() async {
+    // Check if the user is signed in.
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -22,12 +26,11 @@ class _CartPageState extends State<CartPage> {
       return;
     }
     
-    // Reference to the current user's cart
-    final cartRef =
-        _firestore.collection('users').doc(user.uid).collection('cart');
+    // Reference to the current user's cart.
+    final cartRef = _firestore.collection('users').doc(user.uid).collection('cart');
     final cartSnapshot = await cartRef.get();
 
-    // Check if the cart is empty
+    // Check if the cart is empty.
     if (cartSnapshot.docs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Your cart is empty.")),
@@ -45,7 +48,33 @@ class _CartPageState extends State<CartPage> {
       return;
     }
     
-    // Build a list of items and calculate the total
+    // Retrieve the restaurant document from Firestore.
+    final restaurantDoc = await _firestore.collection('restaurants').doc(restaurantId).get();
+    if (!restaurantDoc.exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Restaurant not found.")),
+      );
+      return;
+    }
+    
+    final restaurantData = restaurantDoc.data();
+    final restaurantAddress = restaurantData?['address'];
+    if (restaurantAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Restaurant address not found.")),
+      );
+      return;
+    }
+
+    // Write the restaurant address to the Firebase Realtime Database.
+    try {
+      await _realtimeDatabase.child("restaurant_address").set({"address": restaurantAddress});
+      print("Restaurant address successfully written to Realtime Database.");
+    } catch (e) {
+      print("Error writing restaurant address to Realtime Database: $e");
+    }
+    
+    // Build a list of items and calculate the total.
     List<Map<String, dynamic>> items = [];
     double total = 0;
     for (var doc in cartSnapshot.docs) {
@@ -56,7 +85,7 @@ class _CartPageState extends State<CartPage> {
           : data['price'] as double);
     }
     
-    // Prepare the order data
+    // Prepare the order data for Firestore.
     final orderData = {
       'userId': user.uid,
       'items': items,
@@ -66,7 +95,7 @@ class _CartPageState extends State<CartPage> {
     };
 
     try {
-      // Add order to the restaurant's orders collection
+      // Add order to the restaurant's orders collection in Firestore.
       final orderRef = _firestore
           .collection('restaurants')
           .doc(restaurantId)
@@ -74,7 +103,7 @@ class _CartPageState extends State<CartPage> {
           .doc();
       await orderRef.set(orderData);
 
-      // Clear the user's cart after placing the order
+      // Clear the user's cart after placing the order.
       for (var doc in cartSnapshot.docs) {
         await doc.reference.delete();
       }
@@ -135,7 +164,7 @@ class _CartPageState extends State<CartPage> {
                     return const Center(child: Text('Your cart is empty.'));
                   }
 
-                  // Build a list of cart items
+                  // Build a list of cart items.
                   return ListView.builder(
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
@@ -154,7 +183,7 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Order Now button
+            // Order Now button.
             Center(
               child: ElevatedButton(
                 onPressed: _orderNow,
@@ -166,7 +195,7 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Sign Out button (optional)
+            // Sign Out button (optional).
             Center(
               child: ElevatedButton(
                 onPressed: () {

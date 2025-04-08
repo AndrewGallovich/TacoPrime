@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tacoprime/components/bottom_nav_bar.dart';
 import 'package:tacoprime/pages/cart_page.dart';
 import 'package:tacoprime/pages/shop_page.dart';
+import 'package:tacoprime/pages/user_settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,6 +31,9 @@ class _HomePageState extends State<HomePage> {
 
     // Cart Page
     const CartPage(),
+
+    // User Settings Page
+    const UserSettingsPage(),
   ];
 
   @override

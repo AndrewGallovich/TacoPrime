@@ -67,7 +67,7 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
               ElevatedButton(
                 onPressed: _toggleStop,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: _stopValue == 0 ? Colors.red : Colors.green,
                   minimumSize: const Size(double.infinity, 80), // Full width and 80-pixel height.
                 ),
                 child: Text(

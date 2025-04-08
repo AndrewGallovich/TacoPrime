@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
     authDomain: 'tacoprime-bdb43.firebaseapp.com',
+    databaseURL: 'https://tacoprime-bdb43-default-rtdb.firebaseio.com',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
     measurementId: 'G-KTEHBKXKBP',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:1019698818755:android:f96582d537943c3af07c76',
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
+    databaseURL: 'https://tacoprime-bdb43-default-rtdb.firebaseio.com',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
   );
 
@@ -63,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:1019698818755:ios:977c7e33bfa77a78f07c76',
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
+    databaseURL: 'https://tacoprime-bdb43-default-rtdb.firebaseio.com',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
     iosClientId: '1019698818755-5kct07jjpl2v498d6fd14m4kdgop0qn1.apps.googleusercontent.com',
     iosBundleId: 'com.example.tacoprime',
@@ -73,6 +76,7 @@ class DefaultFirebaseOptions {
     appId: '1:1019698818755:ios:977c7e33bfa77a78f07c76',
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
+    databaseURL: 'https://tacoprime-bdb43-default-rtdb.firebaseio.com',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
     iosClientId: '1019698818755-5kct07jjpl2v498d6fd14m4kdgop0qn1.apps.googleusercontent.com',
     iosBundleId: 'com.example.tacoprime',
@@ -84,6 +88,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1019698818755',
     projectId: 'tacoprime-bdb43',
     authDomain: 'tacoprime-bdb43.firebaseapp.com',
+    databaseURL: 'https://tacoprime-bdb43-default-rtdb.firebaseio.com',
     storageBucket: 'tacoprime-bdb43.firebasestorage.app',
     measurementId: 'G-JVPFNXF9BT',
   );

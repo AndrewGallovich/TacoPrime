@@ -30,6 +30,10 @@ class MyBottomNavBar extends StatelessWidget {
             icon: Icons.account_circle,
             text: ' Profile',
           ),
+          GButton(
+            icon: Icons.map,
+            text: ' Map',
+          ),
         ],
         )
     );

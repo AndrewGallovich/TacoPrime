@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:tacoprime/services/messaging_service.dart';
 
 class InsideOrder extends StatefulWidget {
   final String restaurantId;
@@ -17,16 +18,48 @@ class InsideOrder extends StatefulWidget {
 
 class _InsideOrderState extends State<InsideOrder> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Instantiate the messaging service.
+  final MessagingService _messagingService = MessagingService();
 
-  /// Marks the order as complete by updating its status.
+  /// Marks the order as complete by updating its status and sends a push notification.
   Future<void> _markOrderAsComplete() async {
     try {
+      // Update the order status to "completed".
       await _firestore
           .collection('restaurants')
           .doc(widget.restaurantId)
           .collection('orders')
           .doc(widget.orderId)
           .update({'status': 'completed'});
+
+      // Retrieve the updated order document.
+      final orderDoc = await _firestore
+          .collection('restaurants')
+          .doc(widget.restaurantId)
+          .collection('orders')
+          .doc(widget.orderId)
+          .get();
+
+      final orderData = orderDoc.data();
+
+      if (orderData == null) {
+        print("Order document data is null.");
+        return;
+      }
+
+      // Ensure the order contains the 'userId' field.
+      final userId = orderData['userId'];
+      if (userId == null) {
+        print("No userId found in the order document.");
+      } else {
+        // Send the notification using the MessagingService.
+        await _messagingService.sendNotificationToUser(
+          userId,
+          orderId: widget.orderId,
+          restaurantId: widget.restaurantId,
+        );
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Order marked as complete!")),
       );
@@ -62,7 +95,7 @@ class _InsideOrderState extends State<InsideOrder> {
             return const Center(child: Text("Order not found."));
           }
 
-          // Parse order data
+          // Parse order data.
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final total = data['total'] is int
               ? (data['total'] as int).toDouble()

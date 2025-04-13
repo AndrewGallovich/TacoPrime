@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/components/restaurant_nav_bar.dart';
+import 'package:tacoprime/pages/map_page.dart';
 import 'package:tacoprime/pages/orders_page.dart';
 import 'package:tacoprime/pages/restaurant_preview_page.dart';
 import 'package:tacoprime/pages/restaurant_settings_page.dart';
@@ -53,6 +54,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
       RestaurantPreviewPage(restaurantId: restaurantId!),
       OrdersPage(restaurantId: restaurantId!),
       const RestaurantSettingsPage(),
+      const MapPage(),
     ];
 
     return Scaffold(

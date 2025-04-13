@@ -20,15 +20,19 @@ class RestaurantNavBar extends StatelessWidget {
         tabs: [
           GButton(
             icon: Icons.store,
-            text: 'Your Restaurant',
+            text: ' Restaurant',
           ),
           GButton(
             icon: Icons.assignment,
-            text: 'Orders',
+            text: ' Orders',
           ),
           GButton(
             icon: Icons.settings,
-            text: 'Restaurant Settings',
+            text: ' Settings',
+          ),
+          GButton(
+            icon: Icons.map,
+            text: ' Map',
           ),
         ],
         )

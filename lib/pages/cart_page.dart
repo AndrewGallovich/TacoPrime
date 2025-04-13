@@ -16,6 +16,28 @@ class _CartPageState extends State<CartPage> {
   // Create a reference to the Realtime Database.
   final DatabaseReference _realtimeDatabase = FirebaseDatabase.instance.ref();
 
+  // State variable to hold the user's address from Firestore.
+  String _userAddress = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserAddress();
+  }
+
+  // Function to fetch the user's current address from Firestore.
+  Future<void> _loadUserAddress() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (doc.exists && doc.data() != null) {
+        setState(() {
+          _userAddress = (doc.data()!['address'] ?? '') as String;
+        });
+      }
+    }
+  }
+
   Future<void> _orderNow() async {
     // Check if the user is signed in.
     final user = FirebaseAuth.instance.currentUser;
@@ -183,14 +205,16 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Order Now button.
+            // Order Now button that is disabled if the user has no address.
             Center(
               child: ElevatedButton(
-                onPressed: _orderNow,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: const Text(
-                  'Order Now',
-                  style: TextStyle(color: Colors.white),
+                onPressed: _userAddress.trim().isNotEmpty ? _orderNow : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _userAddress.trim().isNotEmpty ? Colors.green : Colors.grey,
+                ),
+                child: Text(
+                  _userAddress.trim().isNotEmpty ? 'Order Now' : 'Please input address',
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart'; // Import Realtime Database package
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import '../components/cart_item.dart';
+import 'past_orders_page.dart'; // Import the past orders page
 
 class CartPage extends StatefulWidget {
   const CartPage({Key? key}) : super(key: key);
@@ -38,8 +39,8 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
+  // Function to place an order.
   Future<void> _orderNow() async {
-    // Check if the user is signed in.
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -144,7 +145,7 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    // If the user isn't signed in, show a message or redirect.
+    // If the user isn't signed in, show a message.
     if (user == null) {
       return const Scaffold(
         body: Center(child: Text('Please sign in to view your cart.')),
@@ -219,22 +220,23 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Sign Out button (optional).
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  FirebaseAuth.instance.signOut();
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                child: const Text(
-                  'Sign Out',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
+      ),
+      // The floating action button for past orders.
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        elevation: 0,
+        child: const Icon(
+          Icons.shopping_bag,
+          color: Colors.white,
+          ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PastOrdersPage()),
+          );
+        },
       ),
     );
   }

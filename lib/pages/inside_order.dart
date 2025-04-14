@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/services/messaging_service.dart';
 
@@ -18,8 +19,29 @@ class InsideOrder extends StatefulWidget {
 
 class _InsideOrderState extends State<InsideOrder> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // Instantiate the messaging service.
   final MessagingService _messagingService = MessagingService();
+
+  // Store the user's account type.
+  String _accountType = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _getAccountType();
+  }
+
+  /// Fetch the current user's account type from Firestore.
+  Future<void> _getAccountType() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        setState(() {
+          _accountType = userDoc.data()!['accountType'] ?? 'customer';
+        });
+      }
+    }
+  }
 
   /// Marks the order as complete by updating its status and sends a push notification.
   Future<void> _markOrderAsComplete() async {
@@ -108,8 +130,7 @@ class _InsideOrderState extends State<InsideOrder> {
               : 'N/A';
 
           return Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -133,8 +154,7 @@ class _InsideOrderState extends State<InsideOrder> {
                   child: ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
-                      final item =
-                          items[index] as Map<String, dynamic>;
+                      final item = items[index] as Map<String, dynamic>;
                       final name = item['name'] ?? 'No name';
                       final price = item['price'] is int
                           ? (item['price'] as int).toDouble()
@@ -143,8 +163,7 @@ class _InsideOrderState extends State<InsideOrder> {
                       final imageUrl = item['imageUrl'] ?? '';
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 8),
                         child: ListTile(
                           leading: imageUrl.isNotEmpty
                               ? Image.network(
@@ -162,8 +181,10 @@ class _InsideOrderState extends State<InsideOrder> {
                     },
                   ),
                 ),
-                // Show the "Mark as Complete" button only if the order isn't already completed.
-                if (status != 'completed')
+                // Only show the "Mark as Complete" button if:
+                // - The order is not already completed.
+                // - The logged-in user's account type is not "customer".
+                if (status != 'completed' && _accountType != 'customer')
                   Center(
                     child: ElevatedButton(
                       onPressed: _markOrderAsComplete,

@@ -163,6 +163,20 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                     style: TextStyle(fontSize: 18),
                   ),
                 ),
+                const SizedBox(height: 20),
+                // Sign Out button moved from the Cart page.
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      FirebaseAuth.instance.signOut();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                    child: const Text(
+                      'Sign Out',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

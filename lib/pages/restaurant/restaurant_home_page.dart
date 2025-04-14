@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/components/restaurant_nav_bar.dart';
 import 'package:tacoprime/pages/map_page.dart';
-import 'package:tacoprime/pages/orders_page.dart';
-import 'package:tacoprime/pages/restaurant_preview_page.dart';
-import 'package:tacoprime/pages/restaurant_settings_page.dart';
+import 'package:tacoprime/pages/restaurant/orders_page.dart';
+import 'package:tacoprime/pages/restaurant/restaurant_preview_page.dart';
+import 'package:tacoprime/pages/restaurant/restaurant_settings_page.dart';
 
 class RestaurantHomePage extends StatefulWidget {
   const RestaurantHomePage({super.key});

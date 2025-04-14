@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../services/image_service.dart';
+import '../../services/image_service.dart';
 
 class RestaurantPreviewPage extends StatefulWidget {
   final String restaurantId;

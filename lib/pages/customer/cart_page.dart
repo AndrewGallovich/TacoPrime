@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import '../components/cart_item.dart';
+import '../../components/cart_item.dart';
 import 'past_orders_page.dart'; // Import the past orders page
 
 class CartPage extends StatefulWidget {

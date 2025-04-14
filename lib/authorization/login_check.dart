@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:tacoprime/pages/home_page.dart';
-import 'package:tacoprime/pages/restaurant_home_page.dart';
+import 'package:tacoprime/pages/customer/home_page.dart';
+import 'package:tacoprime/pages/restaurant/restaurant_home_page.dart';
 import '../authorization/auth_page.dart';
 
 class LoginCheck extends StatefulWidget {

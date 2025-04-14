@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../services/restaurant_service.dart';
-import '../services/image_service.dart';
+import '../../services/restaurant_service.dart';
+import '../../services/image_service.dart';
 
 class RestaurantSettingsPage extends StatefulWidget {
   const RestaurantSettingsPage({Key? key}) : super(key: key);

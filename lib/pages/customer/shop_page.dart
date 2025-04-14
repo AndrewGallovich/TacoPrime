@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/components/restaurant_tile.dart';
 import 'package:tacoprime/models/restaurant.dart';
-import 'package:tacoprime/pages/inside_restaurant.dart';
+import 'package:tacoprime/pages/customer/inside_restaurant.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});

@@ -12,6 +12,7 @@ class RestaurantNavBar extends StatelessWidget {
       child: GNav(
         color: Colors.grey[400],
         activeColor: Colors.grey[900],
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
         tabActiveBorder: Border.all(color: Colors.white),
         tabBackgroundColor: Colors.grey.shade100,
         mainAxisAlignment: MainAxisAlignment.center,

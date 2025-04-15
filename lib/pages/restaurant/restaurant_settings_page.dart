@@ -125,72 +125,81 @@ class _RestaurantSettingsPageState extends State<RestaurantSettingsPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Sign Out button
-          MaterialButton(
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-            },
-            color: Colors.black,
-            child: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.grey[300],
+        title: const Text(
+          "Restaurant Settings",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
           ),
-          const SizedBox(height: 20),
-
-          // If no restaurant exists, show creation form
-          if (restaurantId == null) ...[
-            const Text(
-              'Create Your Restaurant',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _restaurantNameController,
-              decoration: const InputDecoration(labelText: 'Restaurant Name'),
-            ),
-            TextField(
-              controller: _restaurantAddressController,
-              decoration: const InputDecoration(labelText: 'Restaurant Address'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _createRestaurant,
-              child: const Text("Create Restaurant"),
-            ),
-          ] else ...[
-            // Update existing restaurant tile
-            const Text(
-              'Update Restaurant Tile',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _restaurantDescriptionController,
-              decoration: const InputDecoration(labelText: 'Restaurant Description'),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _restaurantImageUrlController,
-                    decoration: const InputDecoration(labelText: 'Restaurant Image URL'),
+      ),
+      backgroundColor: Colors.grey[300],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Conditionally show the restaurant creation form or update tile section
+            if (restaurantId == null) ...[
+              const Text(
+                'Create Your Restaurant',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _restaurantNameController,
+                decoration: const InputDecoration(labelText: 'Restaurant Name'),
+              ),
+              TextField(
+                controller: _restaurantAddressController,
+                decoration: const InputDecoration(labelText: 'Restaurant Address'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _createRestaurant,
+                child: const Text("Create Restaurant"),
+              ),
+            ] else ...[
+              // Update existing restaurant tile section
+              const Text(
+                'Update Restaurant Tile',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _restaurantDescriptionController,
+                decoration: const InputDecoration(labelText: 'Restaurant Description'),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _restaurantImageUrlController,
+                      decoration: const InputDecoration(labelText: 'Restaurant Image URL'),
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.upload_file),
-                  onPressed: _pickAndUploadRestaurantImage,
-                ),
-              ],
-            ),
+                  IconButton(
+                    icon: const Icon(Icons.upload_file),
+                    onPressed: _pickAndUploadRestaurantImage,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _updateRestaurantTile,
+                child: const Text("Update Restaurant Tile"),
+              ),
+            ],
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _updateRestaurantTile,
-              child: const Text("Update Restaurant Tile"),
+            // Sign Out button placed at the bottom
+            MaterialButton(
+              onPressed: () {
+                FirebaseAuth.instance.signOut();
+              },
+              color: Colors.black,
+              child: const Text('Sign Out', style: TextStyle(color: Colors.white)),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

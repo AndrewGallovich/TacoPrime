@@ -11,15 +11,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-// Text Controllers
-
+  // Text Controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
-// Add a variable to store the radio selection
+  // Account type radio
   String _selectedAccountType = 'customer';
 
   @override
@@ -27,58 +26,116 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
-  Future signUp() async {
-  if (passwordConfirmed()) {
-    UserCredential userCredential =
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+  // Basic email regex validation
+  bool emailValid(String email) {
+    final regex = RegExp(
+      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+      r"[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$",
     );
+    return regex.hasMatch(email);
+  }
 
-    // The newly created user
-    User? user = userCredential.user;
+  // Show an AlertDialog with the given message
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Registration Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    // Add user details to the database using the user’s UID as the document ID
-    if (user != null) {
-      await addUserDetails(
-        user.uid,
-        _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
-        user.email ?? '', // or _emailController.text.trim()
-        _selectedAccountType,
+  Future<void> signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Pre‐validate email format
+    if (!emailValid(email)) {
+      showErrorDialog('Please enter a valid email address.');
+      return;
+    }
+
+    // Check password match
+    if (_passwordController.text.trim() !=
+        _confirmPasswordController.text.trim()) {
+      showErrorDialog('Passwords do not match. Please confirm your password.');
+      return;
+    }
+
+    try {
+      // Attempt Firebase sign‑up
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
       );
+
+      // Add extra user details to Firestore
+      User? user = userCredential.user;
+      if (user != null) {
+        await addUserDetails(
+          user.uid,
+          _firstNameController.text.trim(),
+          _lastNameController.text.trim(),
+          user.email ?? '',
+          _selectedAccountType,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // Map common error codes to friendly messages
+      String errorMessage;
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage =
+              'This email is already in use. Try logging in or use another email.';
+          break;
+        case 'weak-password':
+          errorMessage =
+              'Your password is too weak. Choose a stronger password.';
+          break;
+        case 'invalid-email':
+          errorMessage =
+              'The email address is invalid. Please check and try again.';
+          break;
+        default:
+          errorMessage =
+              e.message ?? 'An unknown error occurred. Please try again.';
+      }
+      showErrorDialog(errorMessage);
+    } catch (_) {
+      showErrorDialog(
+          'An unexpected error occurred. Please check your connection and try again.');
     }
   }
-}
 
-Future addUserDetails(
-  String uid,
-  String firstName,
-  String lastName,
-  String email,
-  String accountType,
-) async {
-  await FirebaseFirestore.instance
-      .collection('users')
-      .doc(uid) // Use the UID for the document ID
-      .set({
-    'firstName': firstName,
-    'lastName': lastName,
-    'email': email,
-    'accountType': accountType,
-  });
-}
-
-  bool passwordConfirmed() {
-    if (_passwordController.text.trim() ==
-        _confirmPasswordController.text.trim()) {
-      return true;
-    } else {
-      return false;
-    }
+  Future addUserDetails(
+    String uid,
+    String firstName,
+    String lastName,
+    String email,
+    String accountType,
+  ) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set({
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'accountType': accountType,
+    });
   }
 
   @override
@@ -91,44 +148,36 @@ Future addUserDetails(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
+                const Text(
+                  'Welcome',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'Please register with your details below',
+                  style: TextStyle(fontSize: 20, color: Colors.black),
+                ),
+                const SizedBox(height: 50),
 
-                // Hello Again
-
-                Text('Welcome',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    )),
-
-                SizedBox(height: 5),
-
-                Text('Please register with your details below',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                    )),
-
-                SizedBox(height: 50),
-
-                // first name text field
-
+                // First Name
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: TextField(
                         controller: _firstNameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'First Name',
                           border: InputBorder.none,
                         ),
@@ -137,25 +186,22 @@ Future addUserDetails(
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                // Last name text field
-
+                // Last Name
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: TextField(
                         controller: _lastNameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Last Name',
                           border: InputBorder.none,
                         ),
@@ -164,45 +210,40 @@ Future addUserDetails(
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                // Email text field
-
+                // Email
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: TextField(
                         controller: _emailController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Email',
                           border: InputBorder.none,
                         ),
+                        keyboardType: TextInputType.emailAddress,
                       ),
                     ),
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                // Password text field
-
+                // Password
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Padding(
@@ -210,7 +251,7 @@ Future addUserDetails(
                       child: TextField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Password',
                           border: InputBorder.none,
                         ),
@@ -219,18 +260,15 @@ Future addUserDetails(
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                // Confirm password text field
-
+                // Confirm Password
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      border: Border.all(
-                        color: Colors.white,
-                      ),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Padding(
@@ -238,7 +276,7 @@ Future addUserDetails(
                       child: TextField(
                         controller: _confirmPasswordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Confirm Password',
                           border: InputBorder.none,
                         ),
@@ -247,10 +285,9 @@ Future addUserDetails(
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                // Radio buttons for account type
-
+                // Account Type Radios
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -258,30 +295,25 @@ Future addUserDetails(
                       value: 'customer',
                       groupValue: _selectedAccountType,
                       onChanged: (value) {
-                        setState(() {
-                          _selectedAccountType = value!;
-                        });
+                        setState(() => _selectedAccountType = value!);
                       },
                     ),
                     const Text('Customer'),
-                    SizedBox(width: 70),
+                    const SizedBox(width: 70),
                     Radio<String>(
                       value: 'restaurant',
                       groupValue: _selectedAccountType,
                       onChanged: (value) {
-                        setState(() {
-                          _selectedAccountType = value!;
-                        });
+                        setState(() => _selectedAccountType = value!);
                       },
                     ),
                     const Text('Restaurant'),
                   ],
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                // Sign in button
-
+                // Sign Up Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: GestureDetector(
@@ -292,7 +324,7 @@ Future addUserDetails(
                         color: Colors.black,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Center(
+                      child: const Center(
                         child: Text(
                           'Sign Up',
                           style: TextStyle(
@@ -305,22 +337,20 @@ Future addUserDetails(
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 20),
 
-                // Not a member yet? Sign up
-
+                // Login Redirect
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Already a member?',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     GestureDetector(
                       onTap: widget.showLoginPage,
-                      child: Text(
+                      child: const Text(
                         ' Log in',
                         style: TextStyle(
                           color: Colors.blue,

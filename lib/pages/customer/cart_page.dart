@@ -96,6 +96,19 @@ class _CartPageState extends State<CartPage> {
     } catch (e) {
       print("Error writing restaurant address to Realtime Database: $e");
     }
+
+    // Write the restaurant address to the Firebase Realtime Database.
+    try {
+      await _realtimeDatabase.child("restaurant_address").set({"address": restaurantAddress});
+
+      // Also set Standby = 0 when an order is placed
+      await _realtimeDatabase.child("standby").set(0);
+
+      print("Restaurant address and Standby successfully written to Realtime Database.");
+    } catch (e) {
+      print("Error writing to Realtime Database: $e");
+    }
+
     
     // Build a list of items and calculate the total.
     List<Map<String, dynamic>> items = [];

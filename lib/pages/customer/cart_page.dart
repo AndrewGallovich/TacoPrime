@@ -126,6 +126,23 @@ class _CartPageState extends State<CartPage> {
           .doc();
       await orderRef.set(orderData);
 
+      // Loyalty points: 1 point per whole dollar spent (e.g., $12.75 -> 12 points).
+      // Uses an atomic increment so it is safe on concurrent updates.
+      final pointsToAdd = total.floor();
+      try {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .set({'points': FieldValue.increment(pointsToAdd)}, SetOptions(merge: true));
+      } catch (e) {
+        // If points update fails, the order still succeeds; notify the user gracefully.
+        debugPrint('Failed to update points: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Order placed, but points could not be updated right now.")),
+        );
+      }
+
+
       // Clear the user's cart after placing the order.
       for (var doc in cartSnapshot.docs) {
         await doc.reference.delete();

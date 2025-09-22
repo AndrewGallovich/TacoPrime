@@ -1,1 +1,42 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"tacoprime-bdb43","appId":"1:1019698818755:android:f96582d537943c3af07c76","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"tacoprime-bdb43","configurations":{"android":"1:1019698818755:android:f96582d537943c3af07c76","ios":"1:1019698818755:ios:977c7e33bfa77a78f07c76","macos":"1:1019698818755:ios:977c7e33bfa77a78f07c76","web":"1:1019698818755:web:359f97d86137298cf07c76","windows":"1:1019698818755:web:81f72dade7598dfbf07c76"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "tacoprime-bdb43",
+          "appId": "1:1019698818755:android:f96582d537943c3af07c76",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "tacoprime-bdb43",
+          "configurations": {
+            "android": "1:1019698818755:android:f96582d537943c3af07c76",
+            "ios": "1:1019698818755:ios:977c7e33bfa77a78f07c76",
+            "macos": "1:1019698818755:ios:977c7e33bfa77a78f07c76",
+            "web": "1:1019698818755:web:359f97d86137298cf07c76",
+            "windows": "1:1019698818755:web:81f72dade7598dfbf07c76"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}

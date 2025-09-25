@@ -123,12 +123,15 @@ class _CartPageState extends State<CartPage> {
     
     // Prepare the order data for Firestore.
     final orderData = {
-      'userId': user.uid,
-      'items': items,
-      'total': total,
-      'timestamp': FieldValue.serverTimestamp(),
-      'status': 'pending', // initial order status
-    };
+    'userId': user.uid,
+    'items': items,                    // whatever you already collect
+    'total': total,                    // if you save total
+    'status': 'pending',               // keep an ELIGIBLE status
+    'address': _userAddress.trim(),    // <-- ADD THIS (top-level string)
+    'createdAt': FieldValue.serverTimestamp(), // <-- RENAME/ADD THIS
+    // (optional) keep your old one for UI queries if you had it:
+    //'timestamp': FieldValue.serverTimestamp(),
+};
 
     try {
       // Add order to the restaurant's orders collection in Firestore.

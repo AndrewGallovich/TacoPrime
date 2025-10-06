@@ -13,31 +13,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  // Bottom Navigation Bar, this selected index will be used to navigate between the tabs
   int selectedIndex = 0;
 
-  // this method updates the selected index
-  // when user taps on the bottom navigation bar
   void navigateBottomBar(int index) {
     setState(() {
       selectedIndex = index;
     });
   }
 
-  // pages to display
   final List<Widget> pages = [
-    // Shop Page
     const ShopPage(),
-
-    // Cart Page
     const CartPage(),
-
-    // User Settings Page
     const UserSettingsPage(),
-
-    // Map Page
-    const MapPage()
+    const MapPage(key: PageStorageKey('map')), // stable key for map
   ];
 
   @override
@@ -47,7 +35,8 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: MyBottomNavBar(
         onTabChange: (index) => navigateBottomBar(index),
       ),
-      body: pages[selectedIndex],
+      // IndexedStack keeps each page alive, preventing map reloads
+      body: IndexedStack(index: selectedIndex, children: pages),
     );
   }
 }

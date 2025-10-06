@@ -1,5 +1,3 @@
-// map_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -12,7 +10,7 @@ class MapPage extends StatefulWidget {
   _MapPageState createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> {
+class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   // Firebase stream for robot coordinates
   final DatabaseReference _coordsRef =
       FirebaseDatabase.instance.ref('roboCords');
@@ -20,7 +18,6 @@ class _MapPageState extends State<MapPage> {
 
   // Last-known positions
   LatLng? _robotLatLng;
-  Marker? _userMarker;
 
   // Map controller
   GoogleMapController? _mapController;
@@ -51,19 +48,11 @@ class _MapPageState extends State<MapPage> {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
-    // Listen to location changes
+    // Listen to location changes (no longer adds user marker)
     _locationSvc.onLocationChanged.listen((LocationData loc) {
       if (loc.latitude == null || loc.longitude == null) return;
-      final userPos = LatLng(loc.latitude!, loc.longitude!);
-      setState(() {
-        _userMarker = Marker(
-          markerId: const MarkerId('user'),
-          position: userPos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
-          ),
-        );
-      });
+      // Keep listening for possible use in circle or direction updates later
+      // but don't create a user marker anymore.
     });
   }
 
@@ -87,7 +76,7 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  /// 3. Combine robot + user markers
+  /// 3. Robot marker only
   Set<Marker> get _allMarkers {
     final markers = <Marker>{};
     if (_robotLatLng != null) {
@@ -98,14 +87,12 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }
-    if (_userMarker != null) {
-      markers.add(_userMarker!);
-    }
     return markers;
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -121,15 +108,21 @@ class _MapPageState extends State<MapPage> {
                 target: _robotLatLng!,
                 zoom: 16,
               ),
-              markers: _allMarkers,
-              myLocationEnabled: true,
+              markers: _allMarkers, // only robot marker now
+              myLocationEnabled: true, // still show SDK blue dot & circle
               myLocationButtonEnabled: true,
               onMapCreated: (controller) {
                 _mapController = controller;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() {});
+                });
               },
             ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void dispose() {

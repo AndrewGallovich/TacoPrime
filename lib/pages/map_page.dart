@@ -25,34 +25,46 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   // Location service for user GPS
   final Location _locationSvc = Location();
 
+  // Custom marker icon
+  BitmapDescriptor? _robotIcon;
+
   @override
   void initState() {
     super.initState();
     _initLocationTracking();
     _listenRobotLocations();
+    _loadCustomMarker();
+  }
+
+  /// Loads the custom delivery icon for the robot
+  Future<void> _loadCustomMarker() async {
+    final BitmapDescriptor icon = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(4, 4)),
+      'lib/images/rsz_delivery.png',
+    );
+    if (mounted) {
+      setState(() {
+        _robotIcon = icon;
+      });
+    }
   }
 
   /// 1. Request permissions & start listening to device location
   Future<void> _initLocationTracking() async {
-    // Ensure the GPS service is enabled
     bool serviceEnabled = await _locationSvc.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await _locationSvc.requestService();
-      if (!serviceEnabled) return; // cannot proceed without GPS
+      if (!serviceEnabled) return;
     }
 
-    // Ask for location permission
     PermissionStatus permissionGranted = await _locationSvc.hasPermission();
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await _locationSvc.requestPermission();
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
-    // Listen to location changes (no longer adds user marker)
     _locationSvc.onLocationChanged.listen((LocationData loc) {
       if (loc.latitude == null || loc.longitude == null) return;
-      // Keep listening for possible use in circle or direction updates later
-      // but don't create a user marker anymore.
     });
   }
 
@@ -68,7 +80,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
         setState(() => _robotLatLng = newPos);
 
-        // Optionally animate camera to robot
         _mapController?.animateCamera(
           CameraUpdate.newLatLng(newPos),
         );
@@ -84,6 +95,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         Marker(
           markerId: const MarkerId('robot'),
           position: _robotLatLng!,
+          icon: _robotIcon ?? BitmapDescriptor.defaultMarker, // <-- custom icon
         ),
       );
     }
@@ -92,7 +104,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // required by AutomaticKeepAliveClientMixin
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -108,8 +120,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 target: _robotLatLng!,
                 zoom: 16,
               ),
-              markers: _allMarkers, // only robot marker now
-              myLocationEnabled: true, // still show SDK blue dot & circle
+              markers: _allMarkers,
+              myLocationEnabled: true,
               myLocationButtonEnabled: true,
               onMapCreated: (controller) {
                 _mapController = controller;

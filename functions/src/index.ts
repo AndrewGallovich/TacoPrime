@@ -42,7 +42,7 @@ export interface RobotLocation {
   updatedAt?: number;
 }
 
-const ELIGIBLE = new Set(["pending", "prepping", "ready"]);
+const ELIGIBLE = new Set(["pending", "completed", "ready"]);
 const TERMINAL = new Set(["delivered", "canceled"]);
 
 // ---- Heuristics for distance-aware priority ----

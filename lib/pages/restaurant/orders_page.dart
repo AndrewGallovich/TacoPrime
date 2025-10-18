@@ -98,7 +98,7 @@ class _OrdersPageState extends State<OrdersPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Order $orderId',
+                                'OrderID: $orderId',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,

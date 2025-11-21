@@ -13,6 +13,23 @@ class PastOrdersPage extends StatefulWidget {
 class _PastOrdersPageState extends State<PastOrdersPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Helper function to get status color
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'delivered':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'preparing':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ensure the user is logged in.
@@ -24,11 +41,10 @@ class _PastOrdersPageState extends State<PastOrdersPage> {
     }
 
     // Use a collection group query on 'orders' collections.
-    // This query filters by userId and accepts orders that are either "completed" or "pending".
+    // This query filters by userId and shows ALL statuses.
     Query ordersQuery = _firestore
         .collectionGroup('orders')
         .where('userId', isEqualTo: user.uid)
-        .where('status', whereIn: ['completed', 'pending'])
         .orderBy('timestamp', descending: true);
 
     return Scaffold(
@@ -80,8 +96,35 @@ class _PastOrdersPageState extends State<PastOrdersPage> {
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     title: Text('Order Total: \$${total.toStringAsFixed(2)}'),
-                    subtitle: Text(
-                      'Items: ${items.length}\nStatus: $status\nTime: $dateString',
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text('Items: ${items.length}'),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Text('Status: '),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(status),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                status.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text('Time: $dateString'),
+                      ],
                     ),
                     trailing: ElevatedButton(
                       onPressed: () {

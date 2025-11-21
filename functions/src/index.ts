@@ -14,6 +14,7 @@ export interface Order {
   userId?: string;
   address?: string;
   createdAt?: admin.firestore.Timestamp;
+  timestamp?: admin.firestore.Timestamp;  // Added for compatibility with Flutter app
   status?: string;
   lat?: NullableNumber;
   lng?: NullableNumber;
@@ -42,7 +43,7 @@ export interface RobotLocation {
   updatedAt?: number;
 }
 
-const ELIGIBLE = new Set(["pending", "completed", "ready"]);
+const ELIGIBLE = new Set(["pending", "completed", "ready", "en route"]);
 const TERMINAL = new Set(["delivered", "canceled"]);
 
 // ---- Heuristics for distance-aware priority ----
@@ -95,7 +96,8 @@ function buildQueueItem(
   orderId: string,
   data: Order
 ): QueueItem {
-  const createdAtMs = data.createdAt?.toMillis() ?? Date.now();
+  // Support both 'timestamp' (from Flutter) and 'createdAt' (legacy)
+  const createdAtMs = (data.timestamp?.toMillis() ?? data.createdAt?.toMillis()) ?? Date.now();
   return {
     restaurantId,
     orderId,
@@ -111,7 +113,8 @@ function buildQueueItem(
 
 /** Only the mutable fields we want to keep updating on order changes */
 function buildQueueUpdateFromOrder(after: Order): Partial<QueueItem> {
-  const createdAtMs = after.createdAt?.toMillis();
+  // Support both 'timestamp' (from Flutter) and 'createdAt' (legacy)
+  const createdAtMs = after.timestamp?.toMillis() ?? after.createdAt?.toMillis();
   const partial: Partial<QueueItem> = {
     status: after.status ?? "pending",
   };

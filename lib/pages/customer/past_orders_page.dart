@@ -16,7 +16,8 @@ class _PastOrdersPageState extends State<PastOrdersPage> {
   // Helper function to get status color
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'completed':
+      case 'en route':
+        return Colors.purple;
       case 'delivered':
         return Colors.green;
       case 'pending':

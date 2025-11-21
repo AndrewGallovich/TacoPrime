@@ -15,14 +15,14 @@ class _OrdersPageState extends State<OrdersPage> {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// Stream of only "pending" orders under
-  /// restaurants/{restaurantId}/orders ordered by createdAt desc.
+  /// restaurants/{restaurantId}/orders ordered by timestamp desc.
   Stream<QuerySnapshot<Map<String, dynamic>>> _pendingOrdersStream() {
     return _db
         .collection('restaurants')
         .doc(widget.restaurantId)
         .collection('orders')
         .where('status', isEqualTo: 'pending') // must match your stored value
-        .orderBy('createdAt', descending: true)
+        .orderBy('timestamp', descending: true) // Changed from 'createdAt' to 'timestamp'
         .snapshots();
   }
 
@@ -72,8 +72,10 @@ class _OrdersPageState extends State<OrdersPage> {
                 // Safely parse common fields
                 final orderId = doc.id;
                 final status = (data['status'] ?? '').toString();
-                final createdAtTs = data['createdAt'];
-                final createdAt = createdAtTs is Timestamp ? createdAtTs.toDate() : null;
+                
+                // Changed from 'createdAt' to 'timestamp' to match cart_page.dart
+                final timestampTs = data['timestamp'];
+                final timestamp = timestampTs is Timestamp ? timestampTs.toDate() : null;
 
                 // Optional fields (defensive casts)
                 final totalNum = data['total'];
@@ -117,8 +119,8 @@ class _OrdersPageState extends State<OrdersPage> {
                                 'Status: $status',
                                 style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
-                              if (createdAt != null)
-                                Text('Created: ${createdAt.toLocal()}'),
+                              if (timestamp != null)
+                                Text('Created: ${timestamp.toLocal()}'),
                             ],
                           ),
                         ),

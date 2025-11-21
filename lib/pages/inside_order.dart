@@ -43,16 +43,16 @@ class _InsideOrderState extends State<InsideOrder> {
     }
   }
 
-  /// Marks the order as complete by updating its status and sends a push notification.
-  Future<void> _markOrderAsComplete() async {
+  /// Marks the order as "en route" by updating its status and sends a push notification.
+  Future<void> _markOrderAsEnRoute() async {
     try {
-      // Update the order status to "completed".
+      // Update the order status to "en route".
       await _firestore
           .collection('restaurants')
           .doc(widget.restaurantId)
           .collection('orders')
           .doc(widget.orderId)
-          .update({'status': 'completed'});
+          .update({'status': 'en route'});
 
       // Retrieve the updated order document.
       final orderDoc = await _firestore
@@ -83,11 +83,11 @@ class _InsideOrderState extends State<InsideOrder> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Order marked as complete!")),
+        const SnackBar(content: Text("Order marked as en route!")),
       );
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error marking order complete: $error")),
+        SnackBar(content: Text("Error marking order as en route: $error")),
       );
     }
   }
@@ -181,17 +181,18 @@ class _InsideOrderState extends State<InsideOrder> {
                     },
                   ),
                 ),
-                // Only show the "Mark as Complete" button if:
-                // - The order is not already completed.
+                // Only show the "Mark as En Route" button if:
+                // - The order is not already "en route", "delivered", or "canceled".
                 // - The logged-in user's account type is not "customer".
-                if (status != 'completed' && _accountType != 'customer')
+                if (!['en route', 'delivered', 'canceled'].contains(status.toLowerCase()) && 
+                    _accountType != 'customer')
                   Center(
                     child: ElevatedButton(
-                      onPressed: _markOrderAsComplete,
+                      onPressed: _markOrderAsEnRoute,
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green),
                       child: const Text(
-                        "Mark as Complete",
+                        "Mark as En Route",
                         style: TextStyle(color: Colors.white),
                       ),
                     ),

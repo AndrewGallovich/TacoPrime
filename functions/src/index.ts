@@ -273,3 +273,104 @@ export const onRobotMove = functions.database.onValueWritten(
     }
   }
 );
+
+// -------- RTDB to Firestore sync triggers --------
+
+/**
+ * Syncs status changes from RTDB queue back to Firestore orders.
+ * When status changes in /queue/{orderId}, update the corresponding Firestore order document.
+ */
+export const onQueueStatusChange = functions.database.onValueWritten(
+  "/queue/{orderId}",
+  async (event) => {
+    const orderId = event.params.orderId;
+    const afterData = event.data?.after.val() as QueueItem | null;
+    
+    // If the queue item was deleted, don't update Firestore
+    // (the onOrderUpdate function already handles terminal states)
+    if (!afterData) {
+      return;
+    }
+
+    const newStatus = afterData.status;
+    const restaurantId = afterData.restaurantId;
+
+    if (!newStatus || !restaurantId) {
+      console.warn(`Missing status or restaurantId for order ${orderId}`);
+      return;
+    }
+
+    try {
+      // Update the Firestore order document with the new status
+      const orderRef = db
+        .collection("restaurants")
+        .doc(restaurantId)
+        .collection("orders")
+        .doc(orderId);
+
+      const orderDoc = await orderRef.get();
+      
+      // Only update if the document exists and status is different
+      if (orderDoc.exists) {
+        const currentData = orderDoc.data() as Order;
+        if (currentData.status !== newStatus) {
+          await orderRef.update({
+            status: newStatus,
+          });
+          console.log(`Updated order ${orderId} status to ${newStatus}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error updating Firestore for order ${orderId}:`, error);
+    }
+  }
+);
+
+/**
+ * Syncs status changes from RTDB /active path back to Firestore.
+ * This handles cases where the robot updates status in /active.
+ */
+export const onActiveStatusChange = functions.database.onValueWritten(
+  "/active/{orderId}",
+  async (event) => {
+    const orderId = event.params.orderId;
+    const afterData = event.data?.after.val() as QueueItem | null;
+    
+    // If the active item was deleted, don't update Firestore
+    if (!afterData) {
+      return;
+    }
+
+    const newStatus = afterData.status;
+    const restaurantId = afterData.restaurantId;
+
+    if (!newStatus || !restaurantId) {
+      console.warn(`Missing status or restaurantId for active order ${orderId}`);
+      return;
+    }
+
+    try {
+      // Update the Firestore order document with the new status
+      const orderRef = db
+        .collection("restaurants")
+        .doc(restaurantId)
+        .collection("orders")
+        .doc(orderId);
+
+      const orderDoc = await orderRef.get();
+      
+      // Only update if the document exists and status is different
+      if (orderDoc.exists) {
+        const currentData = orderDoc.data() as Order;
+        if (currentData.status !== newStatus) {
+          await orderRef.update({
+            status: newStatus,
+          });
+          console.log(`Updated active order ${orderId} status to ${newStatus}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error updating Firestore for active order ${orderId}:`, error);
+    }
+  }
+);

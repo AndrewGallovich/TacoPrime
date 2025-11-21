@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../inside_order.dart';
+import 'RestaurantPastOrdersPage.dart'; // Import the new past orders page
 
 class OrdersPage extends StatefulWidget {
   final String restaurantId;
@@ -72,8 +73,6 @@ class _OrdersPageState extends State<OrdersPage> {
                 // Safely parse common fields
                 final orderId = doc.id;
                 final status = (data['status'] ?? '').toString();
-                
-                // Changed from 'createdAt' to 'timestamp' to match cart_page.dart
                 final timestampTs = data['timestamp'];
                 final timestamp = timestampTs is Timestamp ? timestampTs.toDate() : null;
 
@@ -148,6 +147,25 @@ class _OrdersPageState extends State<OrdersPage> {
             );
           },
         ),
+      ),
+      // Floating action button to navigate to past orders
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        elevation: 0,
+        child: const Icon(
+          Icons.history,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RestaurantPastOrdersPage(
+                restaurantId: widget.restaurantId,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -377,3 +377,81 @@ export const onActiveStatusChange = functions.database.onValueWritten(
     }
   }
 );
+
+
+interface SendOrderNotificationRequest {
+  userId: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
+/**
+ * Callable function that sends a push notification to all devices
+ * belonging to a user. Tokens are stored in Firestore under
+ * users/{userId}/tokens/{token}.
+ *
+ * Flutter calls this with:
+ *   FirebaseFunctions.instance
+ *     .httpsCallable('sendOrderNotification')
+ *     .call({ userId, title, body, data });
+ */
+export const sendOrderNotification = functions.https.onCall(
+  async (request): Promise<{ success: boolean; message: string }> => {
+    const data = request.data as SendOrderNotificationRequest;
+
+    const userId = data.userId;
+    const title = data.title;
+    const body = data.body;
+    const extraData = data.data ?? {};
+
+    if (!userId || !title || !body) {
+      return {
+        success: false,
+        message: "Missing userId, title, or body",
+      };
+    }
+
+    try {
+      // Tokens stored under users/{userId}/tokens/{token}
+      const tokensSnap = await db
+        .collection(USER_COLLECTION)
+        .doc(userId)
+        .collection("tokens")
+        .get();
+
+      const tokens = tokensSnap.docs.map((doc) => doc.id).filter(Boolean);
+
+      if (tokens.length === 0) {
+        console.log(`sendOrderNotification: No tokens for user ${userId}`);
+        return {
+          success: false,
+          message: "No device tokens for this user",
+        };
+      }
+
+      const payload: admin.messaging.MulticastMessage = {
+        notification: { title, body },
+        data: extraData,
+        tokens,
+      };
+
+      const res = await admin.messaging().sendEachForMulticast(payload);
+
+      console.log(
+        `sendOrderNotification: user=${userId}, success=${res.successCount}, failure=${res.failureCount}`
+      );
+
+      return {
+        success: true,
+        message: `Sent to ${res.successCount} devices, ${res.failureCount} failures`,
+      };
+    } catch (err) {
+      console.error("sendOrderNotification error", err);
+      return {
+        success: false,
+        message: "Internal error sending notification",
+      };
+    }
+  }
+);

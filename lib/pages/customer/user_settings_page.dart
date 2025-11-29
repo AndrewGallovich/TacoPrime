@@ -120,6 +120,8 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
     }
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -244,6 +246,9 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
               onTap: _signOut,
             ),
           ),
+
+          const SizedBox(height: 8),
+
         ],
       ),
     );

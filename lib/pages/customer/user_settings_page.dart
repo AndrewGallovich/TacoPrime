@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-import 'package:tacoprime/components/points_status_card.dart'; // <-- make sure this path matches your project
+import 'package:tacoprime/components/points_status_card.dart';
 
 class UserSettingsPage extends StatefulWidget {
   const UserSettingsPage({super.key});
@@ -16,7 +16,14 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
   final _db = FirebaseDatabase.instance.ref();
   final _users = FirebaseFirestore.instance.collection('users');
 
-  final _addressController = TextEditingController();
+  // Separate controllers for each address field
+  final _streetController = TextEditingController();
+  final _buildingController = TextEditingController();
+  final _roomController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _zipController = TextEditingController();
+  
   bool _emergencyStop = false;
   bool _saving = false;
 
@@ -29,7 +36,12 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
 
   @override
   void dispose() {
-    _addressController.dispose();
+    _streetController.dispose();
+    _buildingController.dispose();
+    _roomController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
     super.dispose();
   }
 
@@ -41,7 +53,17 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
       final snap = await _users.doc(user.uid).get();
       final data = snap.data();
       if (data != null && data['address'] != null) {
-        _addressController.text = data['address'] as String;
+        // Parse the combined address back into fields (simple split by comma)
+        final address = data['address'] as String;
+        final parts = address.split(',').map((e) => e.trim()).toList();
+        
+        // Try to populate fields based on what we can parse
+        if (parts.isNotEmpty) _streetController.text = parts[0];
+        if (parts.length > 1) _buildingController.text = parts[1];
+        if (parts.length > 2) _roomController.text = parts[2];
+        if (parts.length > 3) _cityController.text = parts[3];
+        if (parts.length > 4) _stateController.text = parts[4];
+        if (parts.length > 5) _zipController.text = parts[5];
       }
     } catch (e) {
       debugPrint('Error loading user fields: $e');
@@ -49,14 +71,12 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
   }
 
   void _subscribeEmergencyStop() {
-    // Listen to /emergency_stop in Realtime Database
     final stream = _db.child('emergency_stop').onValue;
     stream.listen((event) {
       final val = event.snapshot.value;
       if (val is bool) {
         setState(() => _emergencyStop = val);
       } else if (val is int) {
-        // some setups store as 0/1
         setState(() => _emergencyStop = val == 1);
       }
     }, onError: (e) {
@@ -64,15 +84,40 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
     });
   }
 
+  String _combineAddress() {
+    // Combine all non-empty fields with commas
+    final parts = [
+      _streetController.text.trim(),
+      _buildingController.text.trim(),
+      _roomController.text.trim(),
+      _cityController.text.trim(),
+      _stateController.text.trim(),
+      _zipController.text.trim(),
+    ].where((part) => part.isNotEmpty).toList();
+    
+    return parts.join(', ');
+  }
+
   Future<void> _saveAddress() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
+      final combinedAddress = _combineAddress();
+      
+      if (combinedAddress.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enter at least one address field')),
+          );
+        }
+        return;
+      }
+
       setState(() => _saving = true);
       await _users.doc(user.uid).set(
         {
-          'address': _addressController.text.trim(),
+          'address': combinedAddress,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -120,8 +165,6 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -138,12 +181,10 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // NEW: Points and status bar card
           const PointsStatusCard(),
-
           const SizedBox(height: 8),
 
-          // Basic profile info (read-only)
+          // Basic profile info
           if (user != null) Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -178,7 +219,7 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
 
           const SizedBox(height: 8),
 
-          // Address editor
+          // Address editor with separate fields
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -189,17 +230,83 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                   Text('Delivery address',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
+                  
                   TextField(
-                    controller: _addressController,
+                    controller: _streetController,
                     decoration: const InputDecoration(
-                      labelText: 'Address',
-                      hintText: 'Dorm, building, room, or meeting point',
+                      labelText: 'Street Address',
+                      hintText: 'e.g., 123 Main St',
                       border: OutlineInputBorder(),
                     ),
-                    minLines: 1,
-                    maxLines: 2,
                   ),
                   const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: _buildingController,
+                          decoration: const InputDecoration(
+                            labelText: 'Building',
+                            hintText: 'Building name/number',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _roomController,
+                          decoration: const InputDecoration(
+                            labelText: 'Room',
+                            hintText: 'Room #',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  TextField(
+                    controller: _cityController,
+                    decoration: const InputDecoration(
+                      labelText: 'City',
+                      hintText: 'e.g., College Station',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _stateController,
+                          decoration: const InputDecoration(
+                            labelText: 'State',
+                            hintText: 'TX',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _zipController,
+                          decoration: const InputDecoration(
+                            labelText: 'ZIP Code',
+                            hintText: '77840',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(
@@ -248,7 +355,6 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
           ),
 
           const SizedBox(height: 8),
-
         ],
       ),
     );

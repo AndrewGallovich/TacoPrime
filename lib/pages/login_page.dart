@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tacoprime/pages/forgot_password_page.dart';
+import 'package:tacoprime/services/messaging_service.dart'; // ADD THIS IMPORT
 
 class LoginPage extends StatefulWidget {
   final VoidCallback showRegisterPage;
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign‐In Error'),
+        title: const Text('Sign In Error'),
         content: Text(message),
         actions: [
           TextButton(
@@ -63,11 +64,18 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      // Attempt Firebase sign‑in
+      // Attempt Firebase sign-in
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      // ADDED: Save FCM token after successful login
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await MessagingService().saveDeviceTokenForUser(user.uid);
+      }
+      
       // On success, Firebase will automatically update the auth state
     } on FirebaseAuthException catch (e) {
       String errorMessage;

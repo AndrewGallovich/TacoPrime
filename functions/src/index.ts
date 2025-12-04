@@ -14,7 +14,7 @@ export interface Order {
   userId?: string;
   address?: string;
   createdAt?: admin.firestore.Timestamp;
-  timestamp?: admin.firestore.Timestamp;  // Added for compatibility with Flutter app
+  timestamp?: admin.firestore.Timestamp; // Added for compatibility with Flutter app
   status?: string;
   lat?: NullableNumber;
   lng?: NullableNumber;
@@ -31,7 +31,7 @@ export interface QueueItem {
   orderId: string;
   address: string;
   createdAtMs: number;
-  priority: number;            // lower = higher priority
+  priority: number; // lower = higher priority
   status: string;
   lat: NullableNumber;
   lng: NullableNumber;
@@ -97,7 +97,8 @@ function buildQueueItem(
   data: Order
 ): QueueItem {
   // Support both 'timestamp' (from Flutter) and 'createdAt' (legacy)
-  const createdAtMs = (data.timestamp?.toMillis() ?? data.createdAt?.toMillis()) ?? Date.now();
+  const createdAtMs =
+    (data.timestamp?.toMillis() ?? data.createdAt?.toMillis()) ?? Date.now();
   return {
     restaurantId,
     orderId,
@@ -114,7 +115,8 @@ function buildQueueItem(
 /** Only the mutable fields we want to keep updating on order changes */
 function buildQueueUpdateFromOrder(after: Order): Partial<QueueItem> {
   // Support both 'timestamp' (from Flutter) and 'createdAt' (legacy)
-  const createdAtMs = after.timestamp?.toMillis() ?? after.createdAt?.toMillis();
+  const createdAtMs =
+    after.timestamp?.toMillis() ?? after.createdAt?.toMillis();
   const partial: Partial<QueueItem> = {
     status: after.status ?? "pending",
   };
@@ -138,6 +140,50 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Internal helper to send a push notification to all devices
+ * for a given user.
+ */
+async function sendPushToUser(
+  userId: string,
+  title: string,
+  body: string,
+  extraData: Record<string, string> = {}
+): Promise<{ success: boolean; message: string }> {
+  const tokensSnap = await db
+    .collection(USER_COLLECTION)
+    .doc(userId)
+    .collection("tokens")
+    .get();
+
+  const tokens = tokensSnap.docs.map((doc) => doc.id).filter(Boolean);
+
+  if (tokens.length === 0) {
+    console.log(`sendPushToUser: No tokens for user ${userId}`);
+    return {
+      success: false,
+      message: "No device tokens for this user",
+    };
+  }
+
+  const payload: admin.messaging.MulticastMessage = {
+    notification: { title, body },
+    data: extraData,
+    tokens,
+  };
+
+  const res = await admin.messaging().sendEachForMulticast(payload);
+
+  console.log(
+    `sendPushToUser: user=${userId}, success=${res.successCount}, failure=${res.failureCount}`
+  );
+
+  return {
+    success: true,
+    message: `Sent to ${res.successCount} devices, ${res.failureCount} failures`,
+  };
 }
 
 // ----------------- Firestore triggers: keep /queue in sync -----------------
@@ -179,11 +225,14 @@ export const onOrderCreate = functions.firestore.onDocumentCreated(
       });
     });
 
-    await rtdb.ref(`/queue/${orderId}`).set(buildQueueItem(restaurantId, orderId, stamped));
+    await rtdb
+      .ref(`/queue/${orderId}`)
+      .set(buildQueueItem(restaurantId, orderId, stamped));
   }
 );
 
 // When an order changes: remove from queue on terminal, update limited fields on eligible, else remove.
+// **Now also sends a push notification when the status actually changes.**
 export const onOrderUpdate = functions.firestore.onDocumentWritten(
   "restaurants/{restaurantId}/orders/{orderId}",
   async (event) => {
@@ -193,7 +242,35 @@ export const onOrderUpdate = functions.firestore.onDocumentWritten(
     const after = afterSnap.data() as Order | undefined;
     if (!after) return;
 
-    const { orderId } = event.params;
+    const beforeSnap = event.data?.before;
+    const beforeData = beforeSnap?.exists
+      ? (beforeSnap.data() as Order | undefined)
+      : undefined;
+
+    const prevStatus = beforeData?.status;
+    const newStatus = after.status;
+    const { restaurantId, orderId } = event.params;
+
+    // Only treat as an "update" (not a create) if there was a before document.
+    const isUpdate = !!beforeSnap?.exists;
+
+    // If status changed on an existing order, send a notification.
+    if (isUpdate && newStatus && newStatus !== prevStatus && after.userId) {
+      try {
+        await sendPushToUser(
+          after.userId,
+          "Order status updated",
+          `Your order is now ${newStatus}`,
+          {
+            orderId,
+            restaurantId,
+            status: newStatus,
+          }
+        );
+      } catch (err) {
+        console.error("Error sending notification on order update", err);
+      }
+    }
 
     if (TERMINAL.has(after.status ?? "")) {
       const deletes: Record<string, null> = {
@@ -246,7 +323,8 @@ export const onRobotMove = functions.database.onValueWritten(
       };
 
       const item = child.val() as ChildItem;
-      const createdAtMs = typeof item?.createdAtMs === "number" ? item.createdAtMs : undefined;
+      const createdAtMs =
+        typeof item?.createdAtMs === "number" ? item.createdAtMs : undefined;
       const latOk = typeof item?.lat === "number";
       const lngOk = typeof item?.lng === "number";
 
@@ -288,7 +366,7 @@ export const onQueueStatusChange = functions.database.onValueWritten(
   async (event) => {
     const orderId = event.params.orderId;
     const afterData = event.data?.after.val() as QueueItem | null;
-    
+
     // If the queue item was deleted, don't update Firestore
     // (the onOrderUpdate function already handles terminal states)
     if (!afterData) {
@@ -312,7 +390,7 @@ export const onQueueStatusChange = functions.database.onValueWritten(
         .doc(orderId);
 
       const orderDoc = await orderRef.get();
-      
+
       // Only update if the document exists and status is different
       if (orderDoc.exists) {
         const currentData = orderDoc.data() as Order;
@@ -338,7 +416,7 @@ export const onActiveStatusChange = functions.database.onValueWritten(
   async (event) => {
     const orderId = event.params.orderId;
     const afterData = event.data?.after.val() as QueueItem | null;
-    
+
     // If the active item was deleted, don't update Firestore
     if (!afterData) {
       return;
@@ -348,7 +426,9 @@ export const onActiveStatusChange = functions.database.onValueWritten(
     const restaurantId = afterData.restaurantId;
 
     if (!newStatus || !restaurantId) {
-      console.warn(`Missing status or restaurantId for active order ${orderId}`);
+      console.warn(
+        `Missing status or restaurantId for active order ${orderId}`
+      );
       return;
     }
 
@@ -361,7 +441,7 @@ export const onActiveStatusChange = functions.database.onValueWritten(
         .doc(orderId);
 
       const orderDoc = await orderRef.get();
-      
+
       // Only update if the document exists and status is different
       if (orderDoc.exists) {
         const currentData = orderDoc.data() as Order;
@@ -369,7 +449,9 @@ export const onActiveStatusChange = functions.database.onValueWritten(
           await orderRef.update({
             status: newStatus,
           });
-          console.log(`Updated active order ${orderId} status to ${newStatus}`);
+          console.log(
+            `Updated active order ${orderId} status to ${newStatus}`
+          );
         }
       }
     } catch (error) {
@@ -377,7 +459,6 @@ export const onActiveStatusChange = functions.database.onValueWritten(
     }
   }
 );
-
 
 interface SendOrderNotificationRequest {
   userId: string;
@@ -413,39 +494,7 @@ export const sendOrderNotification = functions.https.onCall(
     }
 
     try {
-      // Tokens stored under users/{userId}/tokens/{token}
-      const tokensSnap = await db
-        .collection(USER_COLLECTION)
-        .doc(userId)
-        .collection("tokens")
-        .get();
-
-      const tokens = tokensSnap.docs.map((doc) => doc.id).filter(Boolean);
-
-      if (tokens.length === 0) {
-        console.log(`sendOrderNotification: No tokens for user ${userId}`);
-        return {
-          success: false,
-          message: "No device tokens for this user",
-        };
-      }
-
-      const payload: admin.messaging.MulticastMessage = {
-        notification: { title, body },
-        data: extraData,
-        tokens,
-      };
-
-      const res = await admin.messaging().sendEachForMulticast(payload);
-
-      console.log(
-        `sendOrderNotification: user=${userId}, success=${res.successCount}, failure=${res.failureCount}`
-      );
-
-      return {
-        success: true,
-        message: `Sent to ${res.successCount} devices, ${res.failureCount} failures`,
-      };
+      return await sendPushToUser(userId, title, body, extraData);
     } catch (err) {
       console.error("sendOrderNotification error", err);
       return {

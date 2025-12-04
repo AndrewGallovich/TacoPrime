@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tacoprime/services/messaging_service.dart'; // ADD THIS IMPORT
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -61,7 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Pre‐validate email format
+    // Pre-validate email format
     if (!emailValid(email)) {
       showErrorDialog('Please enter a valid email address.');
       return;
@@ -75,7 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     try {
-      // Attempt Firebase sign‑up
+      // Attempt Firebase sign-up
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -92,6 +93,9 @@ class _RegisterPageState extends State<RegisterPage> {
           user.email ?? '',
           _selectedAccountType,
         );
+        
+        // ADDED: Save FCM token after registration
+        await MessagingService().saveDeviceTokenForUser(user.uid);
       }
     } on FirebaseAuthException catch (e) {
       // Map common error codes to friendly messages

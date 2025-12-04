@@ -23,11 +23,15 @@ class _InsideOrderState extends State<InsideOrder> {
 
   // Store the user's account type.
   String _accountType = '';
+  
+  // Track the previous status to detect changes
+  String? _previousStatus;
 
   @override
   void initState() {
     super.initState();
     _getAccountType();
+    _listenToStatusChanges();
   }
 
   /// Fetch the current user's account type from Firestore.
@@ -43,7 +47,57 @@ class _InsideOrderState extends State<InsideOrder> {
     }
   }
 
-  /// Marks the order as "en route" by updating its status and sends a push notification.
+  /// Listen to order status changes and send notifications
+  void _listenToStatusChanges() {
+    final orderRef = _firestore
+        .collection('restaurants')
+        .doc(widget.restaurantId)
+        .collection('orders')
+        .doc(widget.orderId);
+
+    orderRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        if (data != null) {
+          final currentStatus = data['status'] as String?;
+          
+          // Check if status has changed and send notification
+          if (_previousStatus != null && 
+              currentStatus != null && 
+              _previousStatus != currentStatus) {
+            _sendStatusChangeNotification(currentStatus, data);
+          }
+          
+          // Update the previous status
+          _previousStatus = currentStatus;
+        }
+      }
+    });
+  }
+
+  /// Send notification when status changes
+  Future<void> _sendStatusChangeNotification(
+      String newStatus, Map<String, dynamic> orderData) async {
+    try {
+      final userId = orderData['userId'];
+      if (userId == null) {
+        print("No userId found in the order document.");
+        return;
+      }
+
+      // Send the notification with the new status
+      await _messagingService.sendNotificationToUser(
+        userId,
+        orderId: widget.orderId,
+        restaurantId: widget.restaurantId,
+        status: newStatus,
+      );
+    } catch (error) {
+      print("Error sending status change notification: $error");
+    }
+  }
+
+  /// Marks the order as "en route" by updating its status
   Future<void> _markOrderAsEnRoute() async {
     try {
       // Update the order status to "en route".
@@ -53,34 +107,6 @@ class _InsideOrderState extends State<InsideOrder> {
           .collection('orders')
           .doc(widget.orderId)
           .update({'status': 'en route'});
-
-      // Retrieve the updated order document.
-      final orderDoc = await _firestore
-          .collection('restaurants')
-          .doc(widget.restaurantId)
-          .collection('orders')
-          .doc(widget.orderId)
-          .get();
-
-      final orderData = orderDoc.data();
-
-      if (orderData == null) {
-        print("Order document data is null.");
-        return;
-      }
-
-      // Ensure the order contains the 'userId' field.
-      final userId = orderData['userId'];
-      if (userId == null) {
-        print("No userId found in the order document.");
-      } else {
-        // Send the notification using the MessagingService.
-        await _messagingService.sendNotificationToUser(
-          userId,
-          orderId: widget.orderId,
-          restaurantId: widget.restaurantId,
-        );
-      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Order marked as en route!")),

@@ -69,20 +69,73 @@ class MessagingService {
   }
 
   /// Sends a notification to a user about their order status change.
+  /// 
+  /// The [status] parameter determines the notification message.
   Future<void> sendNotificationToUser(
     String userId, {
     required String orderId,
     required String restaurantId,
+    String? status,
   }) async {
+    // Generate appropriate title and body based on status
+    final notificationContent = _getNotificationContent(status);
+    
     await sendOrderNotification(
       userId: userId,
-      title: 'Order Update',
-      body: 'Your order is now en route!',
+      title: notificationContent['title']!,
+      body: notificationContent['body']!,
       data: {
         'orderId': orderId,
         'restaurantId': restaurantId,
-        'status': 'en route',
+        'status': status ?? 'unknown',
       },
     );
+  }
+
+  /// Returns appropriate notification title and body based on order status
+  Map<String, String> _getNotificationContent(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return {
+          'title': 'Order Received',
+          'body': 'Your order has been received and is being prepared.',
+        };
+      case 'preparing':
+        return {
+          'title': 'Order Being Prepared',
+          'body': 'Your order is now being prepared.',
+        };
+      case 'ready':
+        return {
+          'title': 'Order Ready',
+          'body': 'Your order is ready for pickup or delivery!',
+        };
+      case 'en route':
+        return {
+          'title': 'Order On The Way',
+          'body': 'Your order is now en route to you!',
+        };
+      case 'delivered':
+        return {
+          'title': 'Order Delivered',
+          'body': 'Your order has been delivered. Enjoy!',
+        };
+      case 'completed':
+        return {
+          'title': 'Order Completed',
+          'body': 'Your order has been completed. Thank you!',
+        };
+      case 'canceled':
+      case 'cancelled':
+        return {
+          'title': 'Order Canceled',
+          'body': 'Your order has been canceled.',
+        };
+      default:
+        return {
+          'title': 'Order Update',
+          'body': 'Your order status has been updated.',
+        };
+    }
   }
 }
